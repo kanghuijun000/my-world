@@ -137,7 +137,9 @@
     if(w.food<15&&pop>0&&Math.random()<Math.min(.35,.018*speed)){
       const c=w.citizens.pop();w.population=w.citizens.length;addEvent(w,"식량 부족","먹을거리가 부족해지며 공동체의 인구가 줄었습니다. 식량 생산이나 인구 규모를 살펴볼 필요가 있습니다.","🥀","nature");addReaction(w,"negative",c?.name||"주민","걱정이 많은","먹을거리가 점점 부족해지고 있어. 이대로는 오래 버티기 힘들겠어.","식량 부족");
     }
-    if(w.food<20&&Math.floor(w.elapsedDays)%30<speed){w.food=Math.min(100,w.food+5);addEvent(w,"식량 확보 활동","주민들이 주변에서 먹을거리를 찾아 식량을 조금 확보했습니다.","🫐","system");}
+    const oldDay=Math.floor(w.elapsedDays-speed);
+    const newDay=Math.floor(w.elapsedDays);
+    if(w.food<20&&Math.floor(newDay/30)>Math.floor(Math.max(0,oldDay)/30)){w.food=Math.min(100,w.food+5);addEvent(w,"식량 확보 활동","주민들이 주변에서 먹을거리를 찾아 식량을 조금 확보했습니다.","🫐","system");}
     const researchGain=(0.025+pop*0.0018+(w.manualResearch?0.035:0))*speed;
     w.research+=researchGain;
     if(w.techIndex+1<techStages.length&&w.research>=techStages[w.techIndex+1].need){
@@ -151,7 +153,9 @@
       unlockAchievements(w);
     }
     const day=Math.floor(w.elapsedDays);
-    if(day>0&&day%90<speed){
+    const crossed90=Math.floor(day/90)>Math.floor(Math.max(0,oldDay)/90);
+    const crossed365=Math.floor(day/365)>Math.floor(Math.max(0,oldDay)/365);
+    if(day>0&&crossed90){
       if(w.population>=12&&w.food>35&&w.environment>35&&Math.random()<.42){
         const count=Math.min(2,Math.floor((w.population/18)+Math.random()));
         if(count>0){for(let i=0;i<count;i++)w.citizens.push(newCitizen("random"));w.population=w.citizens.length;addEvent(w,"공동체 인구 증가","식량과 환경 조건이 비교적 안정적이어서 새로운 주민이 태어나거나 합류했습니다.","👶","people");reactToEvent(w,"공동체 인구 증가","people");unlockAchievements(w);}
@@ -159,7 +163,7 @@
       if(w.techIndex>=1&&w.settlements<2&&w.population>=18&&Math.random()<.5){w.settlements=2;addEvent(w,"새로운 마을 형성","인구와 농경 지식이 늘어나면서 일부 주민이 새로운 정착지를 만들었습니다.","🏡","village");reactToEvent(w,"새로운 마을 형성","village");unlockAchievements(w);}
       if(w.environment<35&&Math.random()<.3){addEvent(w,"환경 부담 증가","자원 소비와 정착지 확장으로 자연 환경이 압박을 받고 있습니다.","🌫️","nature");reactToEvent(w,"환경 부담 증가","nature");}
     }
-    if(day>0&&day%365<speed&&day%365>=0){addEvent(w,"새로운 해","세계의 시간이 흐르고 있습니다. 주민들의 지식과 생활 방식은 환경과 자원에 영향을 받습니다.","⌛","system");}
+    if(day>0&&crossed365){addEvent(w,"새로운 해","세계의 시간이 흐르고 있습니다. 주민들의 지식과 생활 방식은 환경과 자원에 영향을 받습니다.","⌛","system");}
   }
   function renderHome(){
     $("worldCount").textContent=worlds.length;
