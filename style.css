@@ -129,3 +129,49 @@ html,body{min-height:100%;overscroll-behavior-x:none}
   .info-grid{grid-template-columns:1fr 1fr}
   .info-grid .achievements-panel{grid-column:1/-1}
 }
+
+
+/* v3: welcome screen + immersive full-screen world workspace */
+.welcome-view{
+  position:relative;isolation:isolate;overflow:hidden;min-height:calc(100dvh - 54px);
+  display:flex;align-items:center;justify-content:center;padding:28px clamp(20px,7vw,100px);
+  background:radial-gradient(ellipse at 72% 45%,#293a6740,transparent 43%),radial-gradient(ellipse at 25% 90%,#1c8a8240,transparent 38%);
+}
+.welcome-content{position:relative;z-index:2;width:min(620px,100%);margin-right:auto}
+.welcome-content h1{font-size:clamp(42px,8vw,82px);line-height:1.04;letter-spacing:-3px;margin:20px 0 15px;background:linear-gradient(100deg,#f2f6ff 10%,#9de9df 52%,#a9b7ff 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.welcome-content>p{max-width:440px;font-size:clamp(13px,1.5vw,17px);line-height:1.9;color:#b6c6df;margin:0}
+.start-btn{margin-top:30px;min-width:180px;min-height:52px;justify-content:center;font-size:15px;border-radius:14px}
+.start-btn span{font-size:22px}
+.welcome-footnote{display:flex;align-items:center;gap:8px;margin-top:24px;color:#8599b8;font-size:10px}
+.welcome-footnote span{color:var(--cyan);font-size:16px}
+.welcome-planet{position:absolute;z-index:0;right:clamp(5%,10vw,17%);top:50%;transform:translateY(-50%);width:min(35vw,390px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 30% 25%,#a2f4d0 0%,#4c9d9b 24%,#28617e 49%,#222e61 72%,#10182e 100%);box-shadow:inset -35px -25px 60px #070c20b8,inset 12px 10px 30px #e1ffdc40,0 0 85px #7c9dff25}
+.welcome-planet:before{content:"";position:absolute;inset:12% -9%;border:1px solid #b6d7ff55;border-radius:50%;transform:rotate(-25deg) scaleY(.32)}
+.welcome-planet:after{content:"";position:absolute;inset:22% -18%;border:1px solid #93f0df35;border-radius:50%;transform:rotate(34deg) scaleY(.28)}
+.welcome-planet span{font-size:clamp(26px,4vw,48px);color:#dffcf3;text-shadow:0 0 24px #dffcf399}
+.welcome-orbit{position:absolute;z-index:0;border:1px solid #a9c3ff25;border-radius:50%;pointer-events:none}
+.welcome-orbit-one{width:min(50vw,560px);aspect-ratio:1;right:clamp(-2%,5vw,12%);top:50%;transform:translateY(-50%) rotate(-22deg)}
+.welcome-orbit-two{width:min(58vw,650px);height:min(28vw,320px);right:clamp(-5%,2vw,9%);top:50%;transform:translateY(-50%) rotate(32deg)}
+#worldView{min-height:calc(100dvh - 54px)}
+#worldView .world-layout{height:calc(100dvh - 132px);min-height:330px}
+#worldView .map-card{height:100%;min-height:0}
+#worldView .world-map{height:auto;min-height:0;flex:1 1 auto}
+#worldView .tool-column{height:100%;max-height:none;min-height:0}
+#worldView .info-grid,#worldView .citizens-panel{margin-bottom:10px}
+@media (orientation:landscape) and (max-height:500px){
+  .welcome-view{min-height:calc(100dvh - 46px);padding:18px 5vw}
+  .welcome-content h1{font-size:clamp(36px,7vw,58px);margin:12px 0}
+  .welcome-content>p{font-size:11px;max-width:340px}
+  .start-btn{margin-top:17px;min-height:42px}
+  .welcome-footnote{margin-top:13px}
+  .welcome-planet{width:min(30vw,240px)}
+  #worldView .world-layout{height:calc(100dvh - 110px);min-height:280px}
+}
+@media (orientation:landscape) and (max-width:850px){
+  .welcome-content{width:57%}
+  .welcome-planet{right:6%;width:30vw}
+  .welcome-orbit-one{right:0;width:42vw}
+  .welcome-orbit-two{right:-5%;width:48vw}
+}
+@media (orientation:portrait){
+  .welcome-view{display:none!important}
+}
