@@ -7,8 +7,8 @@
   <meta name="description" content="여러 개의 독립된 세계와 문명의 변화를 관찰하는 시뮬레이션">
   <link rel="manifest" href="manifest.json">
   <title>나의 세계 · World Lab</title>
-  <link rel="stylesheet" href="style.css?v=4">
-  <script src="script.js?v=4" defer></script>
+  <link rel="stylesheet" href="style.css?v=5">
+  <script src="script.js?v=5" defer></script>
 </head>
 <body>
   <div id="orientationNotice" class="orientation-notice" aria-live="polite">
@@ -58,6 +58,7 @@
 
         <div class="world-layout">
           <section class="map-card panel">
+            <button id="toolToggleBtn" class="tool-toggle" type="button" aria-expanded="false" aria-controls="toolColumn">☰ <span class="tool-toggle-label">도구 열기</span></button>
             <div class="map-overlay-head"><div><span class="section-kicker">LIVE WORLD VIEW</span><h2 id="mapHeading">푸른 행성</h2></div><div class="map-badges"><span id="mapScaleBadge" class="pill">행성 전체</span><span id="runState" class="state-pill"><i></i> 진행 중</span></div></div>
             <div id="worldMap" class="world-map scale-world" role="img" aria-label="시뮬레이션 세계 지도">
               <div class="map-stars"></div><div class="map-grid-lines"></div><div class="map-glow"></div>
@@ -74,22 +75,23 @@
             <div class="map-caption"><span class="live-dot"></span><span id="mapCaption">아직 국가는 형성되지 않았습니다.</span></div>
           </section>
 
-          <aside class="tool-column" aria-label="세계 조작 도구">
+          <aside id="toolColumn" class="tool-column" aria-label="세계 조작 도구">
             <section class="panel time-panel"><div class="panel-top"><div><span class="section-kicker">SIMULATION TIME</span><h2>세계의 시간</h2></div></div><div class="year-display"><strong id="worldYear">기원전 10,000년</strong><span id="worldDay">1일 차</span></div><div class="time-controls"><button id="playPauseBtn" class="play-btn" aria-label="일시 정지">Ⅱ</button><div class="speed-control"><div class="speed-label"><span>시간 배속</span><strong id="speedLabel">1×</strong></div><input id="speedSlider" type="range" min="1" max="100" value="1" step="1" aria-label="시간 배속"><div class="range-labels"><span>1×</span><span>50×</span><span>100×</span></div></div></div><p class="subtle-note">화면을 열어 둔 동안에만 시간이 흐릅니다.</p></section>
             <section class="panel stats-panel"><div class="panel-top"><div><span class="section-kicker">WORLD STATUS</span><h2>세계 현황</h2></div><span class="mini-chip">LIVE</span></div><div class="stat-row"><span><i class="stat-icon people">♟</i> 인구</span><strong id="populationStat">12명</strong></div><div class="stat-row"><span><i class="stat-icon science">⌬</i> 기술 수준</span><strong id="techStat">석기 시대</strong></div><div class="stat-row"><span><i class="stat-icon leaf">♧</i> 자연 환경</span><strong id="natureStat">안정적</strong></div><div class="stat-row"><span><i class="stat-icon home">⌂</i> 정착지</span><strong id="settlementStat">1곳</strong></div></section>
             <section class="panel tool-panel"><div class="panel-top"><div><span class="section-kicker">WORLD TOOLS</span><h2>세계 조작</h2></div><span class="tool-symbol">⌘</span></div>
               <div class="tool-actions"><button id="addPeopleBtn" class="tool-button"><span class="tool-emoji">♟</span><span><strong>시민 추가</strong><small>새 주민 합류</small></span><b>＋</b></button><button id="physicsBtn" class="tool-button"><span class="tool-emoji">⚛</span><span><strong>물리법칙</strong><small>중력·기온·산소</small></span><b>→</b></button></div>
-              <form id="commandForm" class="command-form"><label for="commandInput">세계에 명령하기 <span>실험 기능</span></label><div class="command-entry"><input id="commandInput" type="text" maxlength="180" placeholder="예: 시민 20명을 추가해 줘"><button type="submit" aria-label="명령 실행">→</button></div><div class="command-chips"><button type="button" data-command="시민 10명을 추가해 줘">시민 추가</button><button type="button" data-command="새로운 마을을 만들어 줘">마을 만들기</button><button type="button" data-command="과학 연구를 시작해 줘">과학 연구</button></div><p class="subtle-note">지원하는 규칙 명령만 실행됩니다. 자유로운 AI 해석은 아직 연결되지 않았습니다.</p></form>
+              <form id="commandForm" class="command-form"><label for="commandInput">세계 명령 입력 <span>AI 해석 준비 중</span></label><div class="command-entry"><input id="commandInput" type="text" maxlength="180" placeholder="예: 시민 20명을 추가해 줘"><button type="submit" aria-label="명령 실행">→</button></div><div class="command-chips"><button type="button" data-command="시민 10명을 추가해 줘">시민 추가</button><button type="button" data-command="새로운 마을을 만들어 줘">마을 만들기</button><button type="button" data-command="과학 연구를 시작해 줘">과학 연구</button></div><p class="subtle-note">현재는 기본 규칙 명령을 처리합니다. 자유로운 문장을 AI가 이해하려면 AI 연결이 필요합니다.</p></form>
             </section>
+                    <div class="info-grid">
+                      <section class="panel feed-panel"><div class="panel-top"><div><span class="section-kicker">WORLD CHRONICLE</span><h2>세계 현황 기록</h2></div><span class="feed-count" id="eventCount">0개 기록</span></div><div id="eventFeed" class="event-feed"></div></section>
+                      <section class="panel reactions-panel"><div class="panel-top"><div><span class="section-kicker">CITIZEN VOICES</span><h2>시민 반응</h2></div><span class="voice-icon">☷</span></div><div class="filter-row" id="reactionFilters"><button class="active" data-filter="all">전체</button><button data-filter="positive">긍정</button><button data-filter="negative">부정</button><button data-filter="unusual">특이</button></div><div id="reactionFeed" class="reaction-feed"></div></section>
+                      <section class="panel achievements-panel"><div class="panel-top"><div><span class="section-kicker">MILESTONES</span><h2>도전과제</h2></div><span id="achievementCount" class="achievement-count">0 / 8</span></div><div class="achievement-progress"><div id="achievementProgress"></div></div><div id="achievementList" class="achievement-list"></div></section>
+                    </div>
+                    <section class="panel citizens-panel"><div class="panel-top"><div><span class="section-kicker">THE PEOPLE</span><h2>세계의 시민</h2></div><button id="citizenRefreshBtn" class="text-btn">목록 새로고침 ↻</button></div><div id="citizenList" class="citizen-list"></div></section>
+            
           </aside>
         </div>
 
-        <div class="info-grid">
-          <section class="panel feed-panel"><div class="panel-top"><div><span class="section-kicker">WORLD CHRONICLE</span><h2>세계 현황 기록</h2></div><span class="feed-count" id="eventCount">0개 기록</span></div><div id="eventFeed" class="event-feed"></div></section>
-          <section class="panel reactions-panel"><div class="panel-top"><div><span class="section-kicker">CITIZEN VOICES</span><h2>시민 반응</h2></div><span class="voice-icon">☷</span></div><div class="filter-row" id="reactionFilters"><button class="active" data-filter="all">전체</button><button data-filter="positive">긍정</button><button data-filter="negative">부정</button><button data-filter="unusual">특이</button></div><div id="reactionFeed" class="reaction-feed"></div></section>
-          <section class="panel achievements-panel"><div class="panel-top"><div><span class="section-kicker">MILESTONES</span><h2>도전과제</h2></div><span id="achievementCount" class="achievement-count">0 / 8</span></div><div class="achievement-progress"><div id="achievementProgress"></div></div><div id="achievementList" class="achievement-list"></div></section>
-        </div>
-        <section class="panel citizens-panel"><div class="panel-top"><div><span class="section-kicker">THE PEOPLE</span><h2>세계의 시민</h2></div><button id="citizenRefreshBtn" class="text-btn">목록 새로고침 ↻</button></div><div id="citizenList" class="citizen-list"></div></section>
       </section>
     </main>
     <footer><span class="brand-mark">✦</span> WORLD LAB <span>작은 변화가 역사를 만듭니다.</span></footer>
