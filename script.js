@@ -297,4 +297,7 @@
     if(worlds.length===0){addEvent; /* keep the initial screen empty until the user creates a world */ }
   }
   init();
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
+  }
 })();
