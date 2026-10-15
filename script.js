@@ -81,7 +81,8 @@
     if(w.reactions.length>60)w.reactions.length=60;
   }
   function reactToEvent(w,title,kind){
-    const people=w.citizens.slice(0,Math.min(3,w.citizens.length));
+    if(kind!=="discovery"&&!(kind==="nature"&&/(부족|위험|위기|붕괴|재난)/.test(title)))return;
+    const people=w.citizens.length?[pick(w.citizens)]:[];
     if(!people.length)return;
     const lines={
       discovery:["대단해! 우리 삶이 조금 달라질지도 몰라.","이걸 어떻게 알아냈을까? 더 자세히 살펴보고 싶어.","다음에는 또 어떤 발견이 기다릴까?"],
@@ -121,7 +122,7 @@
     if(w.population>30)w.environment=Math.max(0,w.environment-safeCount*0.06);
     const title="새로운 시민 "+safeCount+"명 합류";
     addEvent(w,title,"새 주민들이 공동체에 합류했습니다. 인구 증가에 따라 식량과 거주 공간의 수요도 커졌습니다.","♟","people");
-    reactToEvent(w,title,"people");unlockAchievements(w);save();renderWorld();
+    unlockAchievements(w);save();renderWorld();
   }
   function advanceOneTick(w){
     if(w.paused)return;
@@ -135,7 +136,7 @@
     else if(w.population<25&&w.food>25)w.environment=Math.min(100,w.environment+0.012*speed);
     else if(w.population>40)w.environment=Math.max(0,w.environment-0.012*speed);
     if(w.food<15&&pop>0&&Math.random()<Math.min(.35,.018*speed)){
-      const c=w.citizens.pop();w.population=w.citizens.length;addEvent(w,"식량 부족","먹을거리가 부족해지며 공동체의 인구가 줄었습니다. 식량 생산이나 인구 규모를 살펴볼 필요가 있습니다.","🥀","nature");addReaction(w,"negative",c?.name||"주민","걱정이 많은","먹을거리가 점점 부족해지고 있어. 이대로는 오래 버티기 힘들겠어.","식량 부족");
+      const c=w.citizens.pop();w.population=w.citizens.length;addEvent(w,"식량 부족","먹을거리가 부족해지며 공동체의 인구가 줄었습니다. 식량 생산이나 인구 규모를 살펴볼 필요가 있습니다.","🥀","nature");if(c)addReaction(w,"negative",c.name,c.trait,"먹을거리가 부족해지고 있어. 공동체가 식량을 확보해야 해.","식량 부족");
     }
     const oldDay=Math.floor(w.elapsedDays-speed);
     const newDay=Math.floor(w.elapsedDays);
@@ -148,7 +149,7 @@
       addEvent(t.name+" 발견!",t.desc,t.icon,"discovery");reactToEvent(w,t.name+" 발견!","discovery");
       if(w.techIndex===1){w.food=Math.min(100,w.food+12);addEvent(w,"식량 생산 방식 개선","농경 지식이 식량 확보에 도움을 주기 시작했습니다.","🌾","system");}
       if(w.techIndex===3){w.settlements=Math.max(2,w.settlements);addEvent(w,"기록과 지식의 전승","기록 기술 덕분에 지식을 다음 세대에 전하기 쉬워졌습니다.","📜","civilization");}
-      if(w.techIndex===5){w.environment=Math.max(0,w.environment-5);addEvent(w,"산업 활동의 확대","생산량이 늘기 시작했지만 자원 소비와 환경 부담도 커지고 있습니다.","🏭","nature");reactToEvent(w,"산업 활동의 확대","nature");}
+      if(w.techIndex===5){w.environment=Math.max(0,w.environment-5);addEvent(w,"산업 활동의 확대","생산량이 늘기 시작했지만 자원 소비와 환경 부담도 커지고 있습니다.","🏭","nature");}
       if(w.techIndex===6){addEvent(w,"전기 기술의 초기 발견","전기의 원리를 이해하기 시작했습니다. 아직 전력망이나 가정용 전등이 널리 보급된 것은 아닙니다.","⚡","discovery");}
       unlockAchievements(w);
     }
@@ -158,10 +159,10 @@
     if(day>0&&crossed90){
       if(w.population>=12&&w.food>35&&w.environment>35&&Math.random()<.42){
         const count=Math.min(2,Math.floor((w.population/18)+Math.random()));
-        if(count>0){for(let i=0;i<count;i++)w.citizens.push(newCitizen("random"));w.population=w.citizens.length;addEvent(w,"공동체 인구 증가","식량과 환경 조건이 비교적 안정적이어서 새로운 주민이 태어나거나 합류했습니다.","👶","people");reactToEvent(w,"공동체 인구 증가","people");unlockAchievements(w);}
+        if(count>0){for(let i=0;i<count;i++)w.citizens.push(newCitizen("random"));w.population=w.citizens.length;addEvent(w,"공동체 인구 증가","식량과 환경 조건이 비교적 안정적이어서 새로운 주민이 태어나거나 합류했습니다.","👶","people");unlockAchievements(w);}
       }
-      if(w.techIndex>=1&&w.settlements<2&&w.population>=18&&Math.random()<.5){w.settlements=2;addEvent(w,"새로운 마을 형성","인구와 농경 지식이 늘어나면서 일부 주민이 새로운 정착지를 만들었습니다.","🏡","village");reactToEvent(w,"새로운 마을 형성","village");unlockAchievements(w);}
-      if(w.environment<35&&Math.random()<.3){addEvent(w,"환경 부담 증가","자원 소비와 정착지 확장으로 자연 환경이 압박을 받고 있습니다.","🌫️","nature");reactToEvent(w,"환경 부담 증가","nature");}
+      if(w.techIndex>=1&&w.settlements<2&&w.population>=18&&Math.random()<.5){w.settlements=2;addEvent(w,"새로운 마을 형성","인구와 농경 지식이 늘어나면서 일부 주민이 새로운 정착지를 만들었습니다.","🏡","village");unlockAchievements(w);}
+      if(w.environment<35&&Math.random()<.3){addEvent(w,"환경 부담 증가","자원 소비와 정착지 확장으로 자연 환경이 압박을 받고 있습니다.","🌫️","nature");}
     }
     if(day>0&&crossed365){addEvent(w,"새로운 해","세계의 시간이 흐르고 있습니다. 주민들의 지식과 생활 방식은 환경과 자원에 영향을 받습니다.","⌛","system");}
   }
@@ -254,61 +255,78 @@
     const update=()=>{if(!$("gravityInput"))return;$("gravityOut").textContent=Number($("gravityInput").value).toFixed(1)+" m/s²";$("tempOut").textContent=$("tempInput").value+" °C";$("oxygenOut").textContent=$("oxygenInput").value+"%";};
     ["gravityInput","tempInput","oxygenInput"].forEach(id=>$(id)?.addEventListener("input",update));
   }
-  function executeCommand(raw,fromAI=false){
-    const w=activeWorld();if(!w)return;const cmd=raw.trim();if(!cmd)return;
-    let m=cmd.match(/(?:시민|주민|인구)\s*(\d+)\s*명/);
-    if(m&&/(추가|늘려|합류|생성)/.test(cmd)){const n=Number(m[1]);if(n<1||n>100){showToast("시민은 한 번에 1~100명까지 추가할 수 있어요.");return;}addPeople(w,n,"random");showToast(n+"명의 시민을 추가했어요.");return;}
-    if(/마을/.test(cmd)&&/(만들|생성|세우|추가)/.test(cmd)){
-      if(w.settlements>=10){showToast("현재 시뮬레이션에서 정착지는 최대 10곳으로 제한돼요.");return;}
-      if(w.population<8){showToast("마을을 만들려면 시민이 최소 8명 필요해요.");return;}
-      w.settlements++;addEvent(w,"새로운 마을 형성","사용자 명령에 따라 시민들이 새로운 정착지를 만들었습니다. 인구와 자원 조건에 따라 마을이 유지됩니다.","🏡","village");reactToEvent(w,"새로운 마을 형성","village");unlockAchievements(w);save();renderWorld();showToast("새로운 마을을 만들었어요.");return;
+  function applyAIAction(w,data){
+    if(!data||typeof data!=="object"||typeof data.action!=="string")return false;
+    const action=data.action;
+    if(action==="add_citizens"){
+      const count=Math.floor(Number(data.count));
+      if(!Number.isFinite(count)||count<1||count>100){showToast("시민 추가는 한 번에 1~100명까지 가능해요.");return true;}
+      addPeople(w,count,typeof data.job==="string"&&jobs.includes(data.job)?data.job:"random");showToast("AI 명령 적용: 시민 "+count+"명 추가");return true;
     }
-    if(/연구|과학/.test(cmd)&&/(시작|해|진행|추가|가속)/.test(cmd)){w.manualResearch=1;addEvent(w,"과학 연구 시작","연구 활동을 장려해 지식 축적 속도가 일시적으로 높아졌습니다.","🔭","discovery");reactToEvent(w,"과학 연구 시작","science");save();renderWorld();showToast("연구 활동을 시작했어요. 일정 시간이 지나면 효과가 반영됩니다.");setTimeout(()=>{w.manualResearch=0;save();},30000);return;}
-    if(/시간/.test(cmd)&&/(멈|정지|일시 정지)/.test(cmd)){w.paused=true;save();renderWorld();showToast("세계의 시간을 멈췄어요.");return;}
-    if(/시간/.test(cmd)&&/(재개|다시|흐르게)/.test(cmd)){w.paused=false;save();renderWorld();showToast("세계의 시간이 다시 흐릅니다.");return;}
-    if(/배속|속도/.test(cmd)&&/(시간|시뮬레이션|세계)/.test(cmd)){
-      const speedMatch=cmd.match(/(\d+)\s*배/);
-      if(speedMatch){w.speed=Math.max(1,Math.min(100,Number(speedMatch[1])));$("speedSlider").value=w.speed;$("speedLabel").textContent=w.speed+"×";save();renderWorld();showToast("시간 배속을 "+w.speed+"배로 설정했어요.");return;}
+    if(action==="create_settlement"){
+      if(w.settlements>=10){showToast("정착지는 최대 10곳까지 만들 수 있어요.");return true;}
+      if(w.population<8){showToast("마을을 만들려면 시민이 최소 8명 필요해요.");return true;}
+      w.settlements++;addEvent(w,"새로운 마을 형성","사용자 명령을 AI가 해석해 새로운 정착지를 만들었습니다.","🏡","village");unlockAchievements(w);save();renderWorld();showToast("AI 명령 적용: 새로운 마을 형성");return true;
     }
-    if(!fromAI){interpretCommandWithAI(cmd);return;}
-    showToast("AI가 명령을 이해했지만 아직 실행할 수 있는 기능이 아니에요. 시민 추가, 마을 만들기, 과학 연구, 시간 정지·재개, 배속 변경을 시도해 보세요.");
-    addEvent(w,"명령을 실행할 수 없음","AI가 명령의 뜻은 해석했지만 현재 지원되는 세계 조작 기능과 일치하지 않았습니다.","💬","system");save();renderWorld();
+    if(action==="start_research"){
+      w.manualResearch=1;addEvent(w,"연구 활동 시작","사용자 명령에 따라 연구 활동을 장려합니다. 연구 효과는 잠시 동안 적용됩니다.","🔭","discovery");save();renderWorld();showToast("AI 명령 적용: 연구 활동 시작");
+      setTimeout(()=>{const current=worlds.find(x=>x.id===w.id);if(current){current.manualResearch=0;save();}},30000);return true;
+    }
+    if(action==="set_time"){
+      if(typeof data.paused!=="boolean")return false;
+      w.paused=data.paused;save();renderWorld();showToast(data.paused?"AI 명령 적용: 시간을 멈췄어요":"AI 명령 적용: 시간을 다시 흐르게 했어요");return true;
+    }
+    if(action==="set_speed"){
+      const speed=Math.floor(Number(data.speed));if(!Number.isFinite(speed)||speed<1||speed>100){showToast("시간 배속은 1~100배 범위만 가능해요.");return true;}
+      w.speed=speed;$("speedSlider").value=speed;$("speedLabel").textContent=speed+"×";save();renderWorld();showToast("AI 명령 적용: 시간 배속 "+speed+"배");return true;
+    }
+    if(action==="set_physics"){
+      const changes=[];
+      if(data.gravity!==undefined){const v=Number(data.gravity);if(!Number.isFinite(v)||v<0.5||v>25){showToast("중력은 0.5~25 m/s² 범위만 적용할 수 있어요.");return true;}if(v!==w.gravity){w.gravity=v;changes.push("중력 "+v.toFixed(1)+" m/s²");}}
+      if(data.temperature!==undefined){const v=Number(data.temperature);if(!Number.isFinite(v)||v< -80||v>80){showToast("평균 기온은 -80~80°C 범위만 적용할 수 있어요.");return true;}if(v!==w.temperature){w.temperature=v;changes.push("기온 "+v+"°C");}}
+      if(data.oxygen!==undefined){const v=Number(data.oxygen);if(!Number.isFinite(v)||v<0||v>40){showToast("산소 농도는 0~40% 범위만 적용할 수 있어요.");return true;}if(v!==w.oxygen){w.oxygen=v;changes.push("산소 "+v+"%");}}
+      if(!changes.length){showToast("적용할 물리 조건의 변화가 없어요.");return true;}
+      addEvent(w,"물리 조건 변경",changes.join(", ")+" 조건을 적용했습니다. 생존 가능성과 환경 변화가 달라질 수 있습니다.","⚛","system");save();renderWorld();showToast("AI 명령 적용: "+changes.join(", "));return true;
+    }
+    if(action==="adjust_world"){
+      const key=data.variable;if(!["food","resources","environment"].includes(key))return false;
+      const operation=data.operation,current=Number(w[key]),amount=Number(data.amount);if(!Number.isFinite(amount)||amount<=0||amount>100)return false;
+      let next=operation==="set"?amount:operation==="decrease"?current-amount:operation==="increase"?current+amount:NaN;if(!Number.isFinite(next))return false;
+      next=Math.max(0,Math.min(100,next));w[key]=next;const label=({food:"식량",resources:"자원",environment:"자연 환경"})[key];
+      addEvent(w,label+" 변화",label+" 상태가 사용자 명령에 따라 "+Math.round(next)+" / 100으로 조정되었습니다.","⚖️","system");save();renderWorld();showToast("AI 명령 적용: "+label+" "+Math.round(next)+"/100");return true;
+    }
+    return false;
+  }
+  async function executeCommand(raw){
+    const w=activeWorld();if(!w)return;const cmd=String(raw||"").trim();if(!cmd)return;
+    if(!window.puter||!puter.ai||typeof puter.ai.chat!=="function"){showToast("AI 서비스에 연결할 수 없어 명령을 적용하지 못했어요.");return;}
+    await interpretCommandWithAI(cmd);
   }
   async function interpretCommandWithAI(userText){
-    const w=activeWorld();if(!w)return;
-    if(!window.puter||!puter.ai||typeof puter.ai.chat!=="function"){
-      showToast("AI 서비스를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.");return;
-    }
-    showToast("AI가 명령을 해석하고 있어요…");
+    const worldId=activeId,w=activeWorld();if(!w)return;
+    if(!window.puter||!puter.ai||typeof puter.ai.chat!=="function"){showToast("AI 서비스를 불러오지 못했어요. 연결 상태를 확인해 주세요.");return;}
     const prompt=[
-      "너는 세계 시뮬레이션 앱의 명령 해석기다. 사용자의 문장을 아래 지원 명령 중 하나로 변환하라.",
-      "반드시 JSON 하나만 반환: {\"command\": string|null, \"reason\": string}. 마크다운이나 다른 설명은 쓰지 마라.",
-      "허용되는 command 예시 형식:",
-      "- 시민 12명을 추가해 줘 (숫자는 1~100)",
-      "- 새로운 마을을 만들어 줘",
-      "- 과학 연구를 시작해 줘",
-      "- 시간을 멈춰 줘",
-      "- 시간을 재개해 줘",
-      "- 시간 배속을 10배로 설정해 줘 (1~100배)",
-      "지원 목록 밖의 요청, 실제로 앱이 할 수 없는 일, 정보 질문은 command를 null로 반환하라. 임의의 명령을 만들지 마라.",
-      "현재 세계: "+w.name+"; 인구: "+w.population+"명; 기술: "+techLabel(w)+"; 현재 배속: "+w.speed+"배.",
-      "사용자 요청: "+userText
+      "너는 문명 시뮬레이션의 안전한 명령 실행기다. 사용자 요청의 의도를 판단하고 아래 action JSON 하나만 반환한다.",
+      '반드시 JSON 형식: {"action":string|null, ...}. 마크다운, 설명, 다른 텍스트는 금지한다.',
+      '1) add_citizens: {"action":"add_citizens","count":1~100,"job":"직업명 또는 random"}. 시민을 추가/늘려 달라는 요청.',
+      '2) create_settlement: {"action":"create_settlement"}. 마을/정착지를 만들라는 요청.',
+      '3) start_research: {"action":"start_research"}. 과학/기술 연구를 시작하거나 촉진.',
+      '4) set_time: {"action":"set_time","paused":true|false}. 시간을 멈추거나 다시 흐르게.',
+      '5) set_speed: {"action":"set_speed","speed":1~100}. 시간 배속 변경.',
+      '6) set_physics: {"action":"set_physics", optional gravity:0.5~25, temperature:-80~80, oxygen:0~40}. 명시된 물리 조건 변경. 단위는 중력 m/s², 기온 °C, 산소 %.',
+      '7) adjust_world: {"action":"adjust_world","variable":"food"|"resources"|"environment","operation":"increase"|"decrease"|"set","amount":1~100}. 식량/자원/환경 수치를 조정. 현재 수치는 0~100.',
+      "요청이 지원 목록과 맞지 않거나 단순 질문이면 action:null. 사용자가 지정하지 않은 큰 변화량을 추측하지 말고, 수치가 없는 증감 요청은 적당한 작은 변화량 10을 사용한다. 파괴적/위험한 요청은 거절한다.",
+      "현재 세계 상태: 이름="+w.name+", 인구="+w.population+", 정착지="+w.settlements+", 연구="+Math.round(w.research)+", 기술="+techLabel(w)+", 배속="+w.speed+", 식량="+Math.round(w.food)+"/100, 자원="+Math.round(w.resources)+"/100, 환경="+Math.round(w.environment)+"/100, 중력="+w.gravity+"m/s², 기온="+w.temperature+"°C, 산소="+w.oxygen+"%.",
+      "사용자 명령: "+userText
     ].join(String.fromCharCode(10));
+    showToast("AI가 명령을 해석하고 있어요…");
     try{
-      const response=await puter.ai.chat(prompt);
+      const response=await puter.ai.chat(prompt);if(activeId!==worldId)return;
       const answer=typeof response==="string"?response:(response?.message?.content??response?.text??response?.content??"");
-      const clean=String(answer).replace(/```json|```/gi,"").trim();
-      const data=JSON.parse(clean);
-      if(data&&typeof data.command==="string"&&data.command.trim()){
-        showToast("AI 해석 완료: "+data.command);
-        executeCommand(data.command,true);
-      }else{
-        showToast("AI가 현재 실행 가능한 명령으로 해석하지 못했어요. 예시를 사용해 보세요.");
-      }
-    }catch(error){
-      console.error("AI command interpretation failed",error);
-      showToast("AI 응답을 받지 못했어요. AI 서비스 연결 상태를 확인해 주세요.");
-    }
+      const clean=String(answer).replace(/\x60\x60\x60json|\x60\x60\x60/gi,"").trim(),data=JSON.parse(clean);
+      if(!data||typeof data!=="object"||typeof data.action!=="string"){showToast("AI가 이 요청을 현재 시뮬레이션에 적용할 수 없다고 판단했어요.");return;}
+      if(!applyAIAction(w,data))showToast("AI가 해석한 변화는 아직 시뮬레이션에서 지원하지 않아요.");
+    }catch(error){console.error("AI command interpretation failed",error);showToast("AI 응답을 받지 못했어요. 잠시 후 다시 시도해 주세요.");}
   }
   function showCitizen(id){
     const w=activeWorld();const c=w?.citizens.find(x=>x.id===id);if(!c)return;
@@ -329,7 +347,6 @@
     $("speedSlider").addEventListener("input",e=>{const w=activeWorld();if(!w)return;w.speed=Number(e.target.value);$("speedLabel").textContent=w.speed+"×";save();});
     $("addPeopleBtn").addEventListener("click",addPeopleModal);$("physicsBtn").addEventListener("click",physicsModal);
     $("commandForm").addEventListener("submit",e=>{e.preventDefault();const input=$("commandInput");executeCommand(input.value);input.value="";});
-    document.querySelectorAll("[data-command]").forEach(b=>b.addEventListener("click",()=>{ $("commandInput").value=b.dataset.command;$("commandInput").focus();}));
     $("reactionFilters").addEventListener("click",e=>{const b=e.target.closest("[data-filter]");if(!b)return;activeFilter=b.dataset.filter;$("reactionFilters").querySelectorAll("button").forEach(x=>x.classList.toggle("active",x===b));renderWorld();});
     document.querySelectorAll("[data-scale]").forEach(b=>b.addEventListener("click",()=>setScale(b.dataset.scale)));
     $("zoomInBtn").addEventListener("click",()=>{const keys=Object.keys(levelNames);setScale(keys[Math.min(keys.length-1,keys.indexOf(activeScale)+1)]);});
