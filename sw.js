@@ -1,5 +1,5 @@
-const CACHE_NAME = "my-world-cache-v3";
-const FILES = ["./", "./index.html", "./style.css?v=3", "./script.js?v=3", "./manifest.json", "./icon.svg"];
+const CACHE_NAME = "my-world-cache-v4";
+const FILES = ["./", "./index.html", "./style.css?v=4", "./script.js?v=4", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
