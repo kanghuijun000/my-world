@@ -7,8 +7,8 @@
   <meta name="description" content="여러 개의 독립된 세계와 문명의 변화를 관찰하는 시뮬레이션">
   <link rel="manifest" href="manifest.json">
   <title>나의 세계 · World Lab</title>
-  <link rel="stylesheet" href="style.css?v=2">
-  <script src="script.js?v=2" defer></script>
+  <link rel="stylesheet" href="style.css?v=3">
+  <script src="script.js?v=3" defer></script>
 </head>
 <body>
   <div id="orientationNotice" class="orientation-notice" aria-live="polite">
@@ -23,7 +23,18 @@
     </header>
 
     <main>
-      <section id="homeView" class="view">
+      <section id="welcomeView" class="welcome-view" aria-labelledby="welcomeTitle">
+        <div class="welcome-orbit welcome-orbit-one"></div><div class="welcome-orbit welcome-orbit-two"></div>
+        <div class="welcome-planet" aria-hidden="true"><span>✦</span></div>
+        <div class="welcome-content">
+          <div class="eyebrow"><span class="eyebrow-dot"></span> YOUR UNIVERSE, YOUR RULES</div>
+          <h1 id="welcomeTitle">나의 세계</h1>
+          <p>새로운 세계를 만들고, 그 안에서 펼쳐지는 문명과 역사를 직접 관찰해 보세요.</p>
+          <button id="startBtn" class="primary-btn start-btn">시작하기 <span>→</span></button>
+          <div class="welcome-footnote"><span>✧</span> 세계를 만들고, 법칙을 바꾸고, 변화를 지켜보세요.</div>
+        </div>
+      </section>
+      <section id="homeView" class="view hidden">
         <div class="hero">
           <div class="eyebrow"><span class="eyebrow-dot"></span> YOUR UNIVERSE, YOUR RULES</div>
           <h1>어떤 세계가<br><span class="gradient-text">탄생하게 될까?</span></h1>
