@@ -258,6 +258,7 @@
     showModal(c.name,"<div style='display:flex;gap:13px;align-items:center;margin-bottom:16px'><div class='avatar' style='width:54px;height:54px;font-size:24px'>"+esc(c.icon)+"</div><div><strong style='font-size:15px'>"+esc(c.name)+"</strong><p style='color:#a6b6cf;font-size:11px;margin:6px 0'>"+esc(c.job)+" · "+esc(c.age)+"세</p><span class='pill'>"+esc(c.trait)+"</span></div></div><div class='form-field'><label>개인 능력</label><div class='modal-note'>기술 숙련도 "+esc(c.skill)+"/5 · 사회적 관계 "+esc(c.relations)+"명</div></div><div class='form-field'><label>기억</label><ul style='margin:0;padding-left:19px;color:#b7c5d8;font-size:11px;line-height:1.8'>"+memories+"</ul></div><div class='modal-note'>시민의 상세한 감정·관계 시뮬레이션은 기초 단계입니다. 현재 기록은 실제 세계 사건과 시민 생성에 기반합니다.</div>",[{label:"닫기",className:"primary-btn",onClick:closeModal}],"CITIZEN PROFILE");
   }
   function bind(){
+    $("startBtn").addEventListener("click",()=>{$("welcomeView").classList.add("hidden");$("homeView").classList.remove("hidden");renderHome();window.scrollTo({top:0,behavior:"smooth"});});
     $("createWorldBtn").addEventListener("click",createWorldModal);$("emptyCreateBtn").addEventListener("click",createWorldModal);
     $("worldList").addEventListener("click",e=>{const menu=e.target.closest("[data-card-menu]");if(menu){e.stopPropagation();const w=worlds.find(x=>x.id===menu.dataset.cardMenu);if(w){showModal(w.name,'<p style="font-size:12px;color:#b8c6db">이 세계를 열거나 이름을 바꾸고, 복제 또는 삭제할 수 있습니다.</p>',[{label:"닫기",className:"secondary-btn",onClick:closeModal},{label:"열기",className:"primary-btn",onClick:()=>{closeModal();openWorld(w.id);}}]);}return;}const card=e.target.closest("[data-open-world]");if(card)openWorld(card.dataset.openWorld);});
     $("worldList").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-open-world]")){e.preventDefault();openWorld(e.target.dataset.openWorld);}});
@@ -294,6 +295,7 @@
   }
   function init(){
     if(worlds.length===0){$("emptyState").classList.remove("hidden");}
+    $("welcomeView").classList.remove("hidden");$("homeView").classList.add("hidden");$("worldView").classList.add("hidden");
     bind();renderHome();startSimulation();
   }
   init();
