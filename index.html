@@ -8,6 +8,7 @@
   <link rel="manifest" href="manifest.json">
   <title>나의 세계 · World Lab</title>
   <link rel="stylesheet" href="style.css?v=5">
+  <script src="https://js.puter.com/v2/"></script>
   <script src="script.js?v=5" defer></script>
 </head>
 <body>
@@ -80,7 +81,7 @@
             <section class="panel stats-panel"><div class="panel-top"><div><span class="section-kicker">WORLD STATUS</span><h2>세계 현황</h2></div><span class="mini-chip">LIVE</span></div><div class="stat-row"><span><i class="stat-icon people">♟</i> 인구</span><strong id="populationStat">12명</strong></div><div class="stat-row"><span><i class="stat-icon science">⌬</i> 기술 수준</span><strong id="techStat">석기 시대</strong></div><div class="stat-row"><span><i class="stat-icon leaf">♧</i> 자연 환경</span><strong id="natureStat">안정적</strong></div><div class="stat-row"><span><i class="stat-icon home">⌂</i> 정착지</span><strong id="settlementStat">1곳</strong></div></section>
             <section class="panel tool-panel"><div class="panel-top"><div><span class="section-kicker">WORLD TOOLS</span><h2>세계 조작</h2></div><span class="tool-symbol">⌘</span></div>
               <div class="tool-actions"><button id="addPeopleBtn" class="tool-button"><span class="tool-emoji">♟</span><span><strong>시민 추가</strong><small>새 주민 합류</small></span><b>＋</b></button><button id="physicsBtn" class="tool-button"><span class="tool-emoji">⚛</span><span><strong>물리법칙</strong><small>중력·기온·산소</small></span><b>→</b></button></div>
-              <form id="commandForm" class="command-form"><label for="commandInput">세계 명령 입력 <span>AI 해석 준비 중</span></label><div class="command-entry"><input id="commandInput" type="text" maxlength="180" placeholder="예: 시민 20명을 추가해 줘"><button type="submit" aria-label="명령 실행">→</button></div><div class="command-chips"><button type="button" data-command="시민 10명을 추가해 줘">시민 추가</button><button type="button" data-command="새로운 마을을 만들어 줘">마을 만들기</button><button type="button" data-command="과학 연구를 시작해 줘">과학 연구</button></div><p class="subtle-note">현재는 기본 규칙 명령을 처리합니다. 자유로운 문장을 AI가 이해하려면 AI 연결이 필요합니다.</p></form>
+              <form id="commandForm" class="command-form"><label for="commandInput">세계 명령 입력 <span>Puter AI 해석</span></label><div class="command-entry"><input id="commandInput" type="text" maxlength="180" placeholder="예: 시민 20명을 추가해 줘"><button type="submit" aria-label="명령 실행">→</button></div><div class="command-chips"><button type="button" data-command="시민 10명을 추가해 줘">시민 추가</button><button type="button" data-command="새로운 마을을 만들어 줘">마을 만들기</button><button type="button" data-command="과학 연구를 시작해 줘">과학 연구</button></div><p class="subtle-note">Puter AI가 명령을 해석합니다. AI 서비스를 사용할 수 없으면 기본 명령 규칙으로 처리합니다.</p></form>
             </section>
                     <div class="info-grid">
                       <section class="panel feed-panel"><div class="panel-top"><div><span class="section-kicker">WORLD CHRONICLE</span><h2>세계 현황 기록</h2></div><span class="feed-count" id="eventCount">0개 기록</span></div><div id="eventFeed" class="event-feed"></div></section>
