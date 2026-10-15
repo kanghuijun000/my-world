@@ -1,0 +1,20 @@
+{
+  "name": "나의 세계 · World Lab",
+  "short_name": "나의 세계",
+  "description": "여러 개의 독립된 세계와 문명의 변화를 관찰하는 시뮬레이션",
+  "lang": "ko-KR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b1120",
+  "theme_color": "#101827",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
