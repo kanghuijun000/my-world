@@ -7,9 +7,9 @@
   <meta name="description" content="여러 개의 독립된 세계와 문명의 변화를 관찰하는 시뮬레이션">
   <link rel="manifest" href="manifest.json">
   <title>나의 세계 · World Lab</title>
-  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="style.css?v=6">
   <script src="https://js.puter.com/v2/"></script>
-  <script src="script.js?v=5" defer></script>
+  <script src="script.js?v=6" defer></script>
 </head>
 <body>
   <div id="orientationNotice" class="orientation-notice" aria-live="polite">
@@ -46,7 +46,7 @@
         <div class="section-heading"><div><span class="section-kicker">YOUR COLLECTION</span><h2>나의 세계 목록</h2></div><button id="createWorldBtn" class="primary-btn"><span>＋</span> 세계 만들기</button></div>
         <div id="worldList" class="world-grid"></div>
         <div id="emptyState" class="empty-state"><div class="empty-planet">✧</div><h3>아직 탄생한 세계가 없어요</h3><p>첫 번째 세계를 만들고 그 안의 역사를 시작해 보세요.</p><button id="emptyCreateBtn" class="primary-btn">첫 세계 만들기 <span>→</span></button></div>
-        <div class="notice"><span>ⓘ</span><p>현재 버전은 이 기기의 브라우저에 세계를 저장합니다. 실제 AI API와 연결된 버전이 아니며, 기본 규칙 기반 시뮬레이션으로 작동합니다.</p></div>
+        <div class="notice"><span>ⓘ</span><p>세계 데이터는 이 기기의 브라우저에 저장됩니다. 자연어 명령은 외부 AI 서비스로 해석한 뒤 지원되는 시뮬레이션 상태에 적용합니다.</p></div>
       </section>
 
       <section id="worldView" class="view hidden">
@@ -61,16 +61,7 @@
           <section class="map-card panel">
             <button id="toolToggleBtn" class="tool-toggle" type="button" aria-expanded="false" aria-controls="toolColumn">☰ <span class="tool-toggle-label">도구 열기</span></button>
             <div class="map-overlay-head"><div><span class="section-kicker">LIVE WORLD VIEW</span><h2 id="mapHeading">푸른 행성</h2></div><div class="map-badges"><span id="mapScaleBadge" class="pill">행성 전체</span><span id="runState" class="state-pill"><i></i> 진행 중</span></div></div>
-            <div id="worldMap" class="world-map scale-world" role="img" aria-label="시뮬레이션 세계 지도">
-              <div class="map-stars"></div><div class="map-grid-lines"></div><div class="map-glow"></div>
-              <div class="land land-a"><span class="terrain terrain-a"></span><span class="terrain terrain-b"></span></div>
-              <div class="land land-b"><span class="terrain terrain-c"></span><span class="terrain terrain-d"></span></div>
-              <div class="land land-c"></div><div class="map-lake"></div>
-              <div class="map-river river-a"></div><div class="map-river river-b"></div>
-              <div class="forest forest-a">♣ ♣ ♣</div><div class="forest forest-b">♣ ♣</div>
-              <div class="map-road road-a"></div><div class="map-road road-b"></div>
-              <div class="map-town town-a"><i></i><span>첫 정착지</span></div><div class="map-town town-b hidden"><i></i><span>새로운 마을</span></div>
-              <div class="map-marker marker-capital"><i></i><span>중심 지역</span></div><div class="map-label label-north">N</div><div class="map-coordinates">WORLD SECTOR 01</div><div class="map-scale-note">개념 지도 · 시뮬레이션 상태 반영</div>
+            <div id="worldMap" class="world-map scale-world" role="img" aria-label="시뮬레이션 세계 지도"><div class="map-stars"></div><div class="map-grid-lines"></div><div class="map-glow"></div><div class="map-scene" id="mapScene"><div class="land land-a"><span class="terrain terrain-a"></span><span class="terrain terrain-b"></span></div><div class="land land-b"><span class="terrain terrain-c"></span><span class="terrain terrain-d"></span></div><div class="land land-c"></div><div class="map-lake"></div><div class="map-river river-a"></div><div class="map-river river-b"></div><div class="forest forest-a">♣ ♣ ♣</div><div class="forest forest-b">♣ ♣</div><div class="map-road road-a"></div><div class="map-road road-b"></div><div class="map-town town-a"><i></i><span>첫 정착지</span></div><div class="map-town town-b hidden"><i></i><span>새로운 마을</span></div><div class="map-marker marker-capital"><i></i><span>중심 지역</span></div></div><div class="map-label label-north">N</div><div class="map-coordinates">WORLD SECTOR 01</div><div class="map-scale-note">개념 지도 · 시뮬레이션 상태 반영</div>
             </div>
             <div class="map-toolbar"><div class="zoom-levels" role="group" aria-label="지도 확대 단계"><button data-scale="world" class="active">세계</button><button data-scale="continent">대륙</button><button data-scale="country">국가</button><button data-scale="city">도시</button><button data-scale="village">마을</button></div><div class="map-zoom-buttons"><button id="zoomOutBtn" class="small-icon-btn" aria-label="축소">−</button><button id="zoomInBtn" class="small-icon-btn" aria-label="확대">＋</button></div></div>
             <div class="map-caption"><span class="live-dot"></span><span id="mapCaption">아직 국가는 형성되지 않았습니다.</span></div>
@@ -81,7 +72,7 @@
             <section class="panel stats-panel"><div class="panel-top"><div><span class="section-kicker">WORLD STATUS</span><h2>세계 현황</h2></div><span class="mini-chip">LIVE</span></div><div class="stat-row"><span><i class="stat-icon people">♟</i> 인구</span><strong id="populationStat">12명</strong></div><div class="stat-row"><span><i class="stat-icon science">⌬</i> 기술 수준</span><strong id="techStat">석기 시대</strong></div><div class="stat-row"><span><i class="stat-icon leaf">♧</i> 자연 환경</span><strong id="natureStat">안정적</strong></div><div class="stat-row"><span><i class="stat-icon home">⌂</i> 정착지</span><strong id="settlementStat">1곳</strong></div></section>
             <section class="panel tool-panel"><div class="panel-top"><div><span class="section-kicker">WORLD TOOLS</span><h2>세계 조작</h2></div><span class="tool-symbol">⌘</span></div>
               <div class="tool-actions"><button id="addPeopleBtn" class="tool-button"><span class="tool-emoji">♟</span><span><strong>시민 추가</strong><small>새 주민 합류</small></span><b>＋</b></button><button id="physicsBtn" class="tool-button"><span class="tool-emoji">⚛</span><span><strong>물리법칙</strong><small>중력·기온·산소</small></span><b>→</b></button></div>
-              <form id="commandForm" class="command-form"><label for="commandInput">세계 명령 입력 <span>Puter AI 해석</span></label><div class="command-entry"><input id="commandInput" type="text" maxlength="180" placeholder="예: 시민 20명을 추가해 줘"><button type="submit" aria-label="명령 실행">→</button></div><div class="command-chips"><button type="button" data-command="시민 10명을 추가해 줘">시민 추가</button><button type="button" data-command="새로운 마을을 만들어 줘">마을 만들기</button><button type="button" data-command="과학 연구를 시작해 줘">과학 연구</button></div><p class="subtle-note">Puter AI가 명령을 해석합니다. AI 서비스를 사용할 수 없으면 기본 명령 규칙으로 처리합니다.</p></form>
+              <form id="commandForm" class="command-form"><label for="commandInput">세계 명령 입력 <span>Puter AI 해석</span></label><div class="command-entry"><input id="commandInput" type="text" maxlength="180" autocomplete="off" placeholder="세계에 적용할 변화를 입력하세요"><button type="submit" aria-label="명령 실행">→</button></div><p class="subtle-note">AI가 명령의 의도를 해석하고, 적용 가능한 세계 변화만 검증 후 반영합니다.</p></form>
             </section>
                     <div class="info-grid">
                       <section class="panel feed-panel"><div class="panel-top"><div><span class="section-kicker">WORLD CHRONICLE</span><h2>세계 현황 기록</h2></div><span class="feed-count" id="eventCount">0개 기록</span></div><div id="eventFeed" class="event-feed"></div></section>
