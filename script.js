@@ -210,8 +210,8 @@
       }
     }catch(e){}
   }
-  function openWorld(id){if(!worlds.some(w=>w.id===id))return;requestLandscape();activeId=id;activeFilter="all";activeScale="world";$("homeView").classList.add("hidden");$("worldView").classList.remove("hidden");$("worldMenu").classList.add("hidden");$("reactionFilters").querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.filter==="all"));renderWorld();window.scrollTo({top:0,behavior:"smooth"});}
-  function goHome(){activeId=null;$("worldView").classList.add("hidden");$("homeView").classList.remove("hidden");$("worldMenu").classList.add("hidden");renderHome();window.scrollTo({top:0,behavior:"smooth"});}
+  function openWorld(id){if(!worlds.some(w=>w.id===id))return;requestLandscape();activeId=id;activeFilter="all";activeScale="world";document.body.classList.add("world-active");document.body.classList.remove("tools-open");$("toolToggleBtn").setAttribute("aria-expanded","false");$("toolToggleBtn").querySelector(".tool-toggle-label").textContent="도구 열기";$("homeView").classList.add("hidden");$("worldView").classList.remove("hidden");$("worldMenu").classList.add("hidden");$("reactionFilters").querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.filter==="all"));renderWorld();window.scrollTo({top:0,behavior:"smooth"});}
+  function goHome(){activeId=null;document.body.classList.remove("world-active","tools-open");$("worldView").classList.add("hidden");$("homeView").classList.remove("hidden");$("worldMenu").classList.add("hidden");renderHome();window.scrollTo({top:0,behavior:"smooth"});}
   function showModal(title,body,buttons,kicker="WORLD LAB"){
     $("modalTitle").textContent=title;$("modalKicker").textContent=kicker;$("modalBody").innerHTML=body;$("modalFooter").innerHTML="";
     buttons.forEach(b=>{const el=document.createElement("button");el.type="button";el.className=b.className||"secondary-btn";el.textContent=b.label;el.addEventListener("click",b.onClick);$("modalFooter").appendChild(el);});
@@ -320,7 +320,7 @@
     $("createWorldBtn").addEventListener("click",createWorldModal);$("emptyCreateBtn").addEventListener("click",createWorldModal);
     $("worldList").addEventListener("click",e=>{const menu=e.target.closest("[data-card-menu]");if(menu){e.stopPropagation();const w=worlds.find(x=>x.id===menu.dataset.cardMenu);if(w){showModal(w.name,'<p style="font-size:12px;color:#b8c6db">이 세계를 열거나 이름을 바꾸고, 복제 또는 삭제할 수 있습니다.</p>',[{label:"닫기",className:"secondary-btn",onClick:closeModal},{label:"열기",className:"primary-btn",onClick:()=>{closeModal();openWorld(w.id);}}]);}return;}const card=e.target.closest("[data-open-world]");if(card)openWorld(card.dataset.openWorld);});
     $("worldList").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-open-world]")){e.preventDefault();openWorld(e.target.dataset.openWorld);}});
-    $("backHomeBtn").addEventListener("click",goHome);$("worldMenuBtn").addEventListener("click",()=>$("worldMenu").classList.toggle("hidden"));
+    $("backHomeBtn").addEventListener("click",goHome);$("toolToggleBtn").addEventListener("click",()=>{const open=!document.body.classList.contains("tools-open");document.body.classList.toggle("tools-open",open);$("toolToggleBtn").setAttribute("aria-expanded",String(open));$("toolToggleBtn").querySelector(".tool-toggle-label").textContent=open?"도구 닫기":"도구 열기";});$("worldMenuBtn").addEventListener("click",()=>$("worldMenu").classList.toggle("hidden"));
     $("renameWorldBtn").addEventListener("click",()=>{$("worldMenu").classList.add("hidden");renameWorld();});
     $("cloneWorldBtn").addEventListener("click",()=>{$("worldMenu").classList.add("hidden");cloneWorld();});
     $("resetWorldBtn").addEventListener("click",()=>{$("worldMenu").classList.add("hidden");resetWorld();});
