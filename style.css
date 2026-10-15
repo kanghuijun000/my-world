@@ -175,3 +175,58 @@ html,body{min-height:100%;overscroll-behavior-x:none}
 @media (orientation:portrait){
   .welcome-view{display:none!important}
 }
+
+/* Full-screen world view with slide-out tools */
+body.world-active{overflow:hidden}
+body.world-active .topbar,body.world-active .app-shell>footer{display:none!important}
+body.world-active .app-shell{max-width:none;width:100%;padding:0;margin:0}
+body.world-active main{margin:0;padding:0}
+body.world-active #worldView{display:block!important;position:fixed;inset:0;z-index:20;width:100vw;height:100vh;height:100dvh;min-height:0;margin:0;padding:0;overflow:hidden;background:#07111e}
+body.world-active #worldView .world-heading{position:absolute;z-index:35;top:9px;left:12px;right:12px;margin:0;display:flex;justify-content:flex-start;gap:10px;pointer-events:none}
+body.world-active #worldView .world-heading>*{pointer-events:auto}
+body.world-active #worldView .world-heading .back-link{margin:0;padding:8px 10px;border:1px solid #ffffff25;border-radius:10px;background:#0b1728d9;color:#d9e7fb;font-size:11px}
+body.world-active #worldView .world-title-wrap{gap:8px}
+body.world-active #worldView .world-icon{width:34px;height:34px;border-radius:10px;font-size:19px;background:#0b1728d9}
+body.world-active #worldView .world-heading .eyebrow{display:none}
+body.world-active #worldView .world-heading h1{font-size:13px;margin:0;text-shadow:0 2px 8px #000}
+body.world-active #worldView .world-heading p{display:none}
+body.world-active #worldView #worldMenuBtn{margin-left:auto;background:#0b1728d9}
+body.world-active #worldView .world-menu{position:fixed;top:52px;right:12px;margin:0}
+body.world-active #worldView .world-layout{position:absolute;inset:0;height:100%;min-height:0;display:block}
+body.world-active #worldView .map-card{position:absolute;inset:0;height:100%;width:100%;padding:0;border:0;border-radius:0;background:#081321;display:flex;flex-direction:column;gap:0}
+body.world-active #worldView .map-overlay-head{position:absolute;z-index:5;top:56px;left:14px;right:14px;margin:0;pointer-events:none}
+body.world-active #worldView .map-overlay-head h2{font-size:clamp(15px,2vw,23px);text-shadow:0 2px 10px #000;margin-top:4px}
+body.world-active #worldView .map-badges{pointer-events:auto}
+body.world-active #worldView .world-map{position:absolute;inset:0;width:100%;height:100%;min-height:0;border:0;border-radius:0}
+body.world-active #worldView .map-caption{position:absolute;left:14px;bottom:55px;z-index:5;padding:7px 10px;border:1px solid #ffffff1c;border-radius:10px;background:#081321b8;backdrop-filter:blur(8px);font-size:10px}
+body.world-active #worldView .map-toolbar{position:absolute;z-index:5;left:12px;right:12px;bottom:10px;margin:0;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+body.world-active #worldView .map-toolbar>*{pointer-events:auto}
+body.world-active #worldView .zoom-levels,body.world-active #worldView .map-zoom-buttons{background:#091626c9;border:1px solid #ffffff1c;border-radius:11px;padding:3px;backdrop-filter:blur(8px)}
+body.world-active #worldView .tool-toggle{position:fixed;z-index:51;right:0;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:7px;padding:15px 10px;border:1px solid #647a9c;border-right:0;border-radius:13px 0 0 13px;background:linear-gradient(145deg,#344b70,#1b2b46);color:#fff;box-shadow:0 8px 28px #0008;font-weight:750;font-size:11px;writing-mode:vertical-rl}
+body.world-active #worldView .tool-column{position:fixed;z-index:50;top:0;right:0;bottom:0;width:min(370px,88vw);height:100vh;height:100dvh;max-height:none;min-height:0;padding:12px 12px 28px;overflow-y:auto;overscroll-behavior:contain;background:#0a1423f7;border:0;border-left:1px solid #40516c;border-radius:0;box-shadow:-18px 0 60px #0008;transform:translateX(102%);transition:transform .24s ease;gap:10px;scrollbar-width:thin}
+body.world-active.tools-open #worldView .tool-column{transform:translateX(0)}
+body.world-active.tools-open #worldView .tool-toggle{right:min(370px,88vw);border-radius:12px 0 0 12px}
+body.world-active #worldView .tool-column .panel{flex:0 0 auto}
+body.world-active #worldView .tool-column .info-grid{display:grid;grid-template-columns:1fr;gap:10px;margin:0}
+body.world-active #worldView .tool-column .info-grid .panel{padding:12px}
+body.world-active #worldView .tool-column .info-grid .panel-top h2,body.world-active #worldView .tool-column .citizens-panel .panel-top h2{font-size:14px}
+body.world-active #worldView .tool-column .event-feed,body.world-active #worldView .tool-column .reaction-feed{max-height:230px;overflow:auto}
+body.world-active #worldView .tool-column .achievement-list{grid-template-columns:1fr}
+body.world-active #worldView .tool-column .citizens-panel{margin:0;padding:12px}
+body.world-active #worldView .tool-column .citizen-list{grid-template-columns:1fr 1fr}
+body.world-active #worldView .tool-column .command-form label span{font-size:8px}
+body.world-active #worldView .tool-column .subtle-note{font-size:10px;line-height:1.5}
+body.world-active #worldView .tool-column .command-entry input{font-size:12px}
+body.world-active #worldView .tool-column .command-chips button{font-size:10px}
+@media(max-width:560px){
+ body.world-active #worldView .world-heading{top:7px;left:7px;right:7px}
+ body.world-active #worldView .world-heading .back-link{padding:7px;font-size:10px}
+ body.world-active #worldView .world-icon{display:none}
+ body.world-active #worldView .map-overlay-head{top:48px;left:9px;right:9px}
+ body.world-active #worldView .map-caption{left:8px;bottom:52px;max-width:72%;font-size:9px}
+ body.world-active #worldView .map-toolbar{left:7px;right:7px;bottom:6px}
+ body.world-active #worldView .zoom-levels button{padding:7px 8px;font-size:10px}
+ body.world-active #worldView .tool-column{width:min(360px,92vw);padding:10px 9px 24px}
+ body.world-active.tools-open #worldView .tool-toggle{right:min(360px,92vw)}
+}
+@media(prefers-reduced-motion:reduce){body.world-active #worldView .tool-column{transition:none}}
