@@ -240,3 +240,29 @@ body.world-active #worldView .tool-column .command-chips{display:none!important}
 body.world-active #worldView .tool-column .command-form .subtle-note{margin-bottom:0}
 @media(max-height:420px){body.world-active #worldView .map-overlay-head{top:44px}body.world-active #worldView .map-caption{bottom:48px}body.world-active #worldView .map-scene{transition-duration:.42s}}
 @media(prefers-reduced-motion:reduce){.map-scene,.map-scene>.land{transition:none!important}}
+
+/* v7: genuine geographic silhouettes and distinct detail per zoom level */
+.geography{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 8px 12px #06151d55)}
+.layer-world,.layer-continent,.layer-country,.layer-city,.layer-village{display:none}
+.scale-world .layer-world,.scale-continent .layer-continent,.scale-country .layer-country,.scale-city .layer-city,.scale-village .layer-village{display:block}
+.geography path{vector-effect:non-scaling-stroke}
+.continent{fill:url(#landFill);stroke:#b7dfb1;stroke-width:2.2;stroke-linejoin:round}
+.continent-focus{fill:url(#landFill);stroke:#c5e8b9;stroke-width:2.5;stroke-linejoin:round}
+.country-shape{fill:url(#countryFill);stroke:#e1e5b6;stroke-width:1.8;stroke-linejoin:round}
+.country-focus{fill:url(#landFill);stroke:#c5e8b9;stroke-width:2.5;stroke-linejoin:round}
+.region-shape{fill:#83b79a;stroke:#d4e1b0;stroke-width:1.8;stroke-linejoin:round}
+.river-line{fill:none;stroke:#63c7e6;stroke-width:4;stroke-linecap:round;filter:drop-shadow(0 0 4px #55cbe8)}
+.city-outline{fill:#7daa8c;stroke:#d0e0b4;stroke-width:2.5}
+.city-road{fill:none;stroke:#f0d8a0;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.city-park{fill:#397f64;stroke:#a7d5a0;stroke-width:1.2}
+.village-field{fill:#7ba77e;stroke:#d0dca6;stroke-width:2}
+.village-road{fill:none;stroke:#eed9a2;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.houses rect{fill:#e2c995;stroke:#fff0c8;stroke-width:1.3}.houses path{fill:#9b6650;stroke:#f1c6a1;stroke-width:1.2}
+.geo-labels{fill:#e8f5e9;font: bold 15px system-ui,sans-serif;paint-order:stroke;stroke:#214c4b;stroke-width:3px;stroke-linejoin:round}
+.city-names{font-size:12px}
+.map-marker,.map-town{position:absolute;z-index:4;display:flex;align-items:center;gap:6px;color:#f0f7ef;font-size:clamp(8px,.9vw,11px);text-shadow:0 2px 5px #102a2d}
+.marker-capital{left:49%;top:29%}.map-town.town-a{left:25%;top:52%}.map-town.town-b{left:61%;top:42%}
+.map-marker i,.map-town i{display:block;width:8px;height:8px;flex:none;border-radius:50%;background:#ffd47b;box-shadow:0 0 0 4px #ffd47b30,0 0 13px #ffd47b}
+.scale-continent .map-scene{transform:scale(1.08)}.scale-country .map-scene{transform:scale(1.2)}.scale-city .map-scene{transform:scale(1.12)}.scale-village .map-scene{transform:scale(1.08)}
+.scale-continent .marker-capital,.scale-country .marker-capital,.scale-city .marker-capital,.scale-village .marker-capital{display:none}
+.scale-city .town-b,.scale-village .town-b,.scale-village .town-a{display:none!important}
