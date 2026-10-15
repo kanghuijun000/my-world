@@ -192,7 +192,8 @@
     save();
   }
   function render(){renderHome();if(activeId)renderWorld();}
-  function openWorld(id){if(!worlds.some(w=>w.id===id))return;activeId=id;activeFilter="all";activeScale="world";$("homeView").classList.add("hidden");$("worldView").classList.remove("hidden");$("worldMenu").classList.add("hidden");$("reactionFilters").querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.filter==="all"));renderWorld();window.scrollTo({top:0,behavior:"smooth"});}
+  function requestLandscape(){try{if(screen.orientation&&typeof screen.orientation.lock==="function")screen.orientation.lock("landscape").catch(()=>{});}catch(e){}}
+  function openWorld(id){if(!worlds.some(w=>w.id===id))return;requestLandscape();activeId=id;activeFilter="all";activeScale="world";$("homeView").classList.add("hidden");$("worldView").classList.remove("hidden");$("worldMenu").classList.add("hidden");$("reactionFilters").querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.filter==="all"));renderWorld();window.scrollTo({top:0,behavior:"smooth"});}
   function goHome(){activeId=null;$("worldView").classList.add("hidden");$("homeView").classList.remove("hidden");$("worldMenu").classList.add("hidden");renderHome();window.scrollTo({top:0,behavior:"smooth"});}
   function showModal(title,body,buttons,kicker="WORLD LAB"){
     $("modalTitle").textContent=title;$("modalKicker").textContent=kicker;$("modalBody").innerHTML=body;$("modalFooter").innerHTML="";
