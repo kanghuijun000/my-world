@@ -254,7 +254,7 @@
     const update=()=>{if(!$("gravityInput"))return;$("gravityOut").textContent=Number($("gravityInput").value).toFixed(1)+" m/s²";$("tempOut").textContent=$("tempInput").value+" °C";$("oxygenOut").textContent=$("oxygenInput").value+"%";};
     ["gravityInput","tempInput","oxygenInput"].forEach(id=>$(id)?.addEventListener("input",update));
   }
-  function executeCommand(raw){
+  function executeCommand(raw,fromAI=false){
     const w=activeWorld();if(!w)return;const cmd=raw.trim();if(!cmd)return;
     let m=cmd.match(/(?:시민|주민|인구)\s*(\d+)\s*명/);
     if(m&&/(추가|늘려|합류|생성)/.test(cmd)){const n=Number(m[1]);if(n<1||n>100){showToast("시민은 한 번에 1~100명까지 추가할 수 있어요.");return;}addPeople(w,n,"random");showToast(n+"명의 시민을 추가했어요.");return;}
@@ -266,8 +266,49 @@
     if(/연구|과학/.test(cmd)&&/(시작|해|진행|추가|가속)/.test(cmd)){w.manualResearch=1;addEvent(w,"과학 연구 시작","연구 활동을 장려해 지식 축적 속도가 일시적으로 높아졌습니다.","🔭","discovery");reactToEvent(w,"과학 연구 시작","science");save();renderWorld();showToast("연구 활동을 시작했어요. 일정 시간이 지나면 효과가 반영됩니다.");setTimeout(()=>{w.manualResearch=0;save();},30000);return;}
     if(/시간/.test(cmd)&&/(멈|정지|일시 정지)/.test(cmd)){w.paused=true;save();renderWorld();showToast("세계의 시간을 멈췄어요.");return;}
     if(/시간/.test(cmd)&&/(재개|다시|흐르게)/.test(cmd)){w.paused=false;save();renderWorld();showToast("세계의 시간이 다시 흐릅니다.");return;}
-    showToast("아직 지원하지 않는 명령이에요. 아래 예시 명령을 사용해 보세요.");
-    addEvent(w,"명령 해석 실패","입력된 명령을 현재 규칙으로 해석하지 못했습니다. 지원하는 명령 예시를 사용해 주세요: 시민 추가, 마을 만들기, 과학 연구.","💬","system");save();renderWorld();
+    if(/배속|속도/.test(cmd)&&/(시간|시뮬레이션|세계)/.test(cmd)){
+      const speedMatch=cmd.match(/(\d+)\s*배/);
+      if(speedMatch){w.speed=Math.max(1,Math.min(100,Number(speedMatch[1])));$("speedSlider").value=w.speed;$("speedLabel").textContent=w.speed+"×";save();renderWorld();showToast("시간 배속을 "+w.speed+"배로 설정했어요.");return;}
+    }
+    if(!fromAI){interpretCommandWithAI(cmd);return;}
+    showToast("AI가 명령을 이해했지만 아직 실행할 수 있는 기능이 아니에요. 시민 추가, 마을 만들기, 과학 연구, 시간 정지·재개, 배속 변경을 시도해 보세요.");
+    addEvent(w,"명령을 실행할 수 없음","AI가 명령의 뜻은 해석했지만 현재 지원되는 세계 조작 기능과 일치하지 않았습니다.","💬","system");save();renderWorld();
+  }
+  async function interpretCommandWithAI(userText){
+    const w=activeWorld();if(!w)return;
+    if(!window.puter||!puter.ai||typeof puter.ai.chat!=="function"){
+      showToast("AI 서비스를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.");return;
+    }
+    showToast("AI가 명령을 해석하고 있어요…");
+    const prompt=[
+      "너는 세계 시뮬레이션 앱의 명령 해석기다. 사용자의 문장을 아래 지원 명령 중 하나로 변환하라.",
+      "반드시 JSON 하나만 반환: {\"command\": string|null, \"reason\": string}. 마크다운이나 다른 설명은 쓰지 마라.",
+      "허용되는 command 예시 형식:",
+      "- 시민 12명을 추가해 줘 (숫자는 1~100)",
+      "- 새로운 마을을 만들어 줘",
+      "- 과학 연구를 시작해 줘",
+      "- 시간을 멈춰 줘",
+      "- 시간을 재개해 줘",
+      "- 시간 배속을 10배로 설정해 줘 (1~100배)",
+      "지원 목록 밖의 요청, 실제로 앱이 할 수 없는 일, 정보 질문은 command를 null로 반환하라. 임의의 명령을 만들지 마라.",
+      "현재 세계: "+w.name+"; 인구: "+w.population+"명; 기술: "+techLabel(w)+"; 현재 배속: "+w.speed+"배.",
+      "사용자 요청: "+userText
+    ].join(String.fromCharCode(10));
+    try{
+      const response=await puter.ai.chat(prompt);
+      const answer=typeof response==="string"?response:(response?.message?.content??response?.text??response?.content??"");
+      const clean=String(answer).replace(/```json|```/gi,"").trim();
+      const data=JSON.parse(clean);
+      if(data&&typeof data.command==="string"&&data.command.trim()){
+        showToast("AI 해석 완료: "+data.command);
+        executeCommand(data.command,true);
+      }else{
+        showToast("AI가 현재 실행 가능한 명령으로 해석하지 못했어요. 예시를 사용해 보세요.");
+      }
+    }catch(error){
+      console.error("AI command interpretation failed",error);
+      showToast("AI 응답을 받지 못했어요. AI 서비스 연결 상태를 확인해 주세요.");
+    }
   }
   function showCitizen(id){
     const w=activeWorld();const c=w?.citizens.find(x=>x.id===id);if(!c)return;
