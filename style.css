@@ -350,3 +350,40 @@ body.world-active #worldView .world-minimap{top:8px;right:8px}
  body.world-active #worldView .world-heading .back-link{padding:6px 8px}
  body.world-active #worldView .world-heading h1{font-size:11px}
 }
+
+
+/* v14: bottom world population and selected settlement information */
+body.world-active #worldView .world-bottom-ui{position:absolute;z-index:24;left:50%;bottom:10px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;width:min(680px,calc(100vw - 24px));pointer-events:none}
+body.world-active #worldView .settlement-title-bar{display:flex;align-items:center;justify-content:center;gap:8px;max-width:100%;min-height:34px;padding:4px 11px;border:1px solid #c5e6f044;border-radius:11px;background:#081522e8;box-shadow:0 5px 20px #0006;backdrop-filter:blur(12px);pointer-events:auto}
+body.world-active #worldView .settlement-name-icon{font-size:16px;color:#8de8d7}
+body.world-active #worldView #settlementNameInput{width:auto;min-width:90px;max-width:min(42vw,320px);padding:2px 3px;border:0;border-bottom:1px dashed #91b5c488;border-radius:0;background:transparent;color:#f1f7ff;font-size:14px;font-weight:750;text-align:center;outline:none}
+body.world-active #worldView #settlementNameInput:focus{border-bottom-color:#63e2d4}
+body.world-active #worldView .settlement-edit-hint{font-size:9px;color:#91a0b9;white-space:nowrap}
+body.world-active #worldView .world-bottom-card{width:100%;padding:11px 15px;border:1px solid #c5e6f044;border-radius:14px;background:rgba(7,18,30,.88);box-shadow:0 8px 28px #0007;backdrop-filter:blur(14px);pointer-events:auto}
+body.world-active #worldView .world-population-info{display:flex;align-items:center;justify-content:center;gap:14px;min-height:24px}
+body.world-active #worldView .world-population-info span{font-size:12px;color:#bdccdf}
+body.world-active #worldView .world-population-info strong{font-size:18px;color:#8de8d7;letter-spacing:.01em}
+body.world-active #worldView .settlement-details{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+body.world-active #worldView .settlement-detail{display:flex;flex-direction:column;gap:5px;min-width:0;padding:1px 8px;border-left:1px solid #ffffff18}
+body.world-active #worldView .settlement-detail:first-child{border-left:0}
+body.world-active #worldView .settlement-detail span{font-size:10px;color:#91a0b9;white-space:nowrap}
+body.world-active #worldView .settlement-detail strong{font-size:12px;color:#edf3ff;line-height:1.35;overflow-wrap:anywhere}
+body.world-active #worldView #settlementStatusValue{color:#8de8d7}
+@media(max-width:600px){
+ body.world-active #worldView .world-bottom-ui{bottom:7px;width:calc(100vw - 14px);gap:4px}
+ body.world-active #worldView .world-bottom-card{padding:8px 7px;border-radius:11px}
+ body.world-active #worldView .settlement-details{gap:3px}
+ body.world-active #worldView .settlement-detail{padding:1px 4px;gap:4px}
+ body.world-active #worldView .settlement-detail span{font-size:8px}
+ body.world-active #worldView .settlement-detail strong{font-size:10px}
+ body.world-active #worldView .world-population-info strong{font-size:16px}
+ body.world-active #worldView .settlement-title-bar{min-height:30px;padding:3px 8px}
+ body.world-active #worldView #settlementNameInput{font-size:12px}
+ body.world-active #worldView .settlement-edit-hint{font-size:8px}
+}
+@media(orientation:landscape) and (max-height:420px){
+ body.world-active #worldView .world-bottom-ui{bottom:5px;gap:3px}
+ body.world-active #worldView .world-bottom-card{padding:6px 10px}
+ body.world-active #worldView .settlement-title-bar{min-height:27px;padding:2px 8px}
+ body.world-active #worldView .settlement-detail{gap:2px}
+}
