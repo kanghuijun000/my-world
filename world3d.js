@@ -161,7 +161,7 @@
   function createWarEffects(w){
     (w?.wars||[]).filter(x=>x.visualAction&&Date.now()-Number(x.visualAction.at||0)<14000).forEach(wr=>{const v=wr.visualAction,from=v.from,to=v.to;if(!from||!to)return;
       if(v.type==="projectile"){for(let i=0;i<2;i++){const m=mesh(root,new THREE.ConeGeometry(.16,.8,7),new THREE.MeshStandardMaterial({color:"#e2e8ee",metalness:.65,roughness:.25,emissive:"#ff6b32",emissiveIntensity:.5}),from.x,3+i*.35,from.z);m.rotation.x=Math.PI/2;projectileActors.push({obj:m,from,to,start:clock+i*.28,duration:2.4});}}
-      else{for(let i=0;i<5;i++){const a=i*Math.PI*2/5,c={id:"soldier-"+wr.id+"-"+i,name:"병사",age:25,job:"군인",trait:"훈련된",icon:"🪖"},p=createPerson(c,100+i,from.x+Math.cos(a)*2.3,from.z+Math.sin(a)*2.3);mesh(p.group,new THREE.BoxGeometry(.3,.38,.26),mat("#455a64"),0,1.2,.02);mesh(p.group,new THREE.BoxGeometry(.5,.08,.08),mat("#242d34"),.25,1.28,.1);p.targetX=to.x+(Math.random()-.5)*to.radius;p.targetZ=to.z+(Math.random()-.5)*to.radius;p.decision=7;soldierActors.push(p);}}
+      else{for(let i=0;i<5;i++){const a=i*Math.PI*2/5,c={id:"soldier-"+wr.id+"-"+i,name:"병사",age:25,job:"군인",trait:"훈련된",icon:"🪖"},p=createPerson(c,100+i,from.x+Math.cos(a)*2.3,from.z+Math.sin(a)*2.3);mesh(p.group,new THREE.BoxGeometry(.3,.38,.26),mat("#455a64"),0,1.2,.02);mesh(p.group,new THREE.BoxGeometry(.5,.08,.08),mat("#242d34"),.25,1.28,.1);p.targetX=to.x+(Math.random()-.5)*to.radius;p.targetZ=to.z+(Math.random()-.5)*to.radius;p.speed=2.2;p.decision=20;soldierActors.push(p);}}
     });
   }
   function createEpidemicEffects(w){
