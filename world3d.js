@@ -3,7 +3,7 @@
   "use strict";
   const SCALE = {world:0,continent:1,country:2,city:3,village:4};
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-  let host,renderer,scene,camera,root,terrain,people=[],buildings=[],trees=[],frame=0,raf=0,scaleName="world",zoom=1,worldData=null,raycaster,mouse,baseCameraPosition=null,baseLookY=0;
+  let host,renderer,scene,camera,root,terrain,people=[],buildings=[],trees=[],frame=0,raf=0,scaleName="world",zoom=1,worldData=null,raycaster,mouse,baseCameraPosition=null,baseLookY=0,lastBuiltPopulation=-1;
   const clock={last:0};
   function seeded(n){let x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x);}
   function mat(color,roughness=.88,metalness=0){return new THREE.MeshStandardMaterial({color,roughness,metalness});}
@@ -45,7 +45,7 @@
     geo.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));geo.computeVertexNormals();
     const gmat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1});
     const g=addMesh(root,geo,gmat,0,-.15,0);g.receiveShadow=true;
-    const water=addMesh(root,new THREE.PlaneGeometry(size*1.2,size*1.2),mat("#5d9caf",.25),0,-.52,0);water.rotation.x=0;water.receiveShadow=false;
+    const water=addMesh(root,new THREE.PlaneGeometry(size*1.2,size*1.2),mat("#5d9caf",.25),0,-.52,0);water.rotation.x=-Math.PI/2;water.receiveShadow=false;
     // Shoreline and layered earth make the terrain read as a real landform.
     const edge=addMesh(root,new THREE.BoxGeometry(size,.8,size),mat("#625744"),0,-.62,0);edge.material.color.set("#625744");
     return g;
@@ -94,6 +94,7 @@
     const mesh=addMesh(root,new THREE.TubeGeometry(curve,Math.max(20,points.length*8),width,5,false),mat(color),0,0,0);mesh.castShadow=false;
   }
   function terrainScene(){
+    lastBuiltPopulation=(worldData&&Array.isArray(worldData.citizens))?worldData.citizens.length:0;
     const level=SCALE[scaleName];const size=scaleName==="world"?54:scaleName==="continent"?42:scaleName==="country"?34:scaleName==="city"?26:19;
     scene.background=new THREE.Color(level<2?"#9bbfd0":level===2?"#a9c6d1":"#b7cbd1");
     scene.fog=new THREE.Fog(scene.background,level<2?35:level===2?27:20,level<2?95:level===2?65:48);
@@ -163,7 +164,7 @@
   function setZoom(value){zoom=clamp(value,.8,5);updateCamera();return zoom;}
   function pan(dx,dy){if(!root||!camera)return;if(scaleName==="world"){root.rotation.y+=dx*.004;root.rotation.x=clamp(root.rotation.x+dy*.003,-.8,.8);}else{root.position.x=clamp(root.position.x+dx*.025,-12,12);root.position.z=clamp(root.position.z+dy*.025,-12,12);}}
   function getZoom(){return zoom;}
-  function setWorld(w){worldData=w;if(root){const list=(w&&Array.isArray(w.citizens))?w.citizens:[];people.forEach((p,i)=>{if(list[i])p.citizen=list[i];});}}
+  function setWorld(w){worldData=w;if(root){const list=(w&&Array.isArray(w.citizens))?w.citizens:[];if(list.length!==lastBuiltPopulation){clearRoot();terrainScene();return;}people.forEach((p,i)=>{if(list[i])p.citizen=list[i];});}}
   function resize(){if(!renderer||!host)return;const r=host.getBoundingClientRect();if(r.width<1||r.height<1)return;renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();}
   function onClick(e){if(!renderer||!people.length)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=((e.clientX-rect.left)/rect.width)*2-1;mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(mouse,camera);const hits=raycaster.intersectObjects(people.map(p=>p.group),true);if(hits.length){let o=hits[0].object;while(o.parent&& !people.some(p=>p.group===o))o=o.parent;const found=people.find(p=>p.group===o);if(found&&found.citizen&&found.citizen.id){const ev=new CustomEvent("world3dcitizenclick",{detail:{id:found.citizen.id}});window.dispatchEvent(ev);}}}
   function animate(t){raf=requestAnimationFrame(animate);if(!renderer||!scene)return;const dt=Math.min(.05,(t-clock.last)/1000||0);clock.last=t;frame+=dt;people.forEach(p=>{const a=frame*p.speed+p.phase;p.legL.rotation.x=Math.sin(a)*.5;p.legR.rotation.x=-Math.sin(a)*.5;p.armL.rotation.x=-Math.sin(a)*.35;p.armR.rotation.x=Math.sin(a)*.35;p.group.position.x=p.origin.x+Math.sin(a*.25)*p.radius;p.group.position.z=p.origin.z+Math.cos(a*.2)*p.radius*.6;});renderer.render(scene,camera);}
