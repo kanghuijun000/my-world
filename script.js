@@ -399,6 +399,8 @@
     const end=e=>{points.delete(e.pointerId);if(points.size<2){startDistance=0;startMid=null;}if(points.size===1){dragStart=[...points.values()][0];lastMid=dragStart;}else dragStart=null;};
     map.addEventListener("pointerup",end);map.addEventListener("pointercancel",end);map.addEventListener("lostpointercapture",end);
     map.addEventListener("wheel",e=>{if(e.target.closest(".map-toolbar,.map-overlay-head,.map-caption,.tool-toggle"))return;e.preventDefault();applyZoom(zoom*(e.deltaY<0?1.12:.89));},{passive:false});
+    $("zoomInBtn").addEventListener("click",()=>applyZoom(zoom*1.22));
+    $("zoomOutBtn").addEventListener("click",()=>applyZoom(zoom/1.22));
     window.addEventListener("world3dcitizenclick",e=>{if(e.detail&&e.detail.id)showCitizen(e.detail.id);});
     applyZoom(1);
   }
@@ -417,8 +419,6 @@
     $("addPeopleBtn").addEventListener("click",addPeopleModal);$("physicsBtn").addEventListener("click",physicsModal);
     $("commandForm").addEventListener("submit",e=>{e.preventDefault();const input=$("commandInput");executeCommand(input.value);input.value="";});
     $("reactionFilters").addEventListener("click",e=>{const b=e.target.closest("[data-filter]");if(!b)return;activeFilter=b.dataset.filter;$("reactionFilters").querySelectorAll("button").forEach(x=>x.classList.toggle("active",x===b));renderWorld();});
-    $("zoomInBtn").addEventListener("click",()=>{if(window.World3D)window.World3D.setZoom(window.World3D.getZoom()*1.22);});
-    $("zoomOutBtn").addEventListener("click",()=>{if(window.World3D)window.World3D.setZoom(window.World3D.getZoom()/1.22);});
     $("citizenRefreshBtn").addEventListener("click",()=>{renderWorld();showToast("시민 목록을 새로고침했어요.");});
     $("citizenList").addEventListener("click",e=>{const c=e.target.closest("[data-citizen]");if(c)showCitizen(c.dataset.citizen);});
     $("citizenList").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-citizen]")){e.preventDefault();showCitizen(e.target.dataset.citizen);}});
