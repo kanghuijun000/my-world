@@ -26,7 +26,7 @@
   }
   function makeMinimap(){
     const box=document.createElement("div");box.className="world-minimap";
-    box.innerHTML='<div class="world-minimap-head"><span>WORLD MAP</span><b id="worldMiniCount">정착지 0</b></div><canvas width="240" height="160" aria-label="세계 미니맵"></canvas><div class="world-minimap-foot">지도를 눌러 해당 지역으로 이동</div>';
+    box.innerHTML='<div class="world-minimap-head"><span>WORLD MAP</span><b id="worldMiniCount">정착지 0</b></div><canvas width="240" height="160" aria-label="세계 미니맵"></canvas><div class="world-minimap-foot"><span><i class="mini-village"></i> 정착지 <i class="mini-city"></i> 도시</span><span>터치 이동</span></div>';
     host.appendChild(box);mini=box.querySelector("canvas");miniCtx=mini.getContext("2d");
     mini.addEventListener("pointerdown",e=>{e.stopPropagation();const r=mini.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*WORLD-WORLD/2;const z=(e.clientY-r.top)/r.height*WORLD-WORLD/2;lookX=clamp(x,-WORLD/2,WORLD/2);lookZ=clamp(z,-WORLD/2,WORLD/2);updateCamera();drawMinimap();});
   }
@@ -151,6 +151,7 @@
     if(p.decision<=0){
       p.decision=2.5+Math.random()*5;
       const nearby=people.filter(q=>q!==p&&Math.hypot(q.group.position.x-p.group.position.x,q.group.position.z-p.group.position.z)<12);
+      if(settlements.length>1&&Math.random()<.08)p.home=settlements[Math.floor(Math.random()*settlements.length)];
       if(nearby.length&&Math.random()<.62){const other=nearby[Math.floor(Math.random()*nearby.length)];p.nearby=other;p.chat=2.5+Math.random()*2;p.targetX=other.group.position.x+(Math.random()-.5)*1.8;p.targetZ=other.group.position.z+(Math.random()-.5)*1.8;}
       else{p.nearby=null;p.chat=0;const s=p.home||settlements[0],a=Math.random()*Math.PI*2,d=Math.random()*(s?s.radius*1.4:8);p.targetX=clamp((s?s.x:0)+Math.cos(a)*d,-WORLD/2+3,WORLD/2-3);p.targetZ=clamp((s?s.z:0)+Math.sin(a)*d,-WORLD/2+3,WORLD/2-3);}
     }
