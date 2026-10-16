@@ -206,7 +206,7 @@
       const as=w.settlementData.filter(x=>x.nationId===a.id),bs=w.settlementData.filter(x=>x.nationId===b.id);if(!as.length||!bs.length){wr.active=false;continue;}
       const advanced=w.techIndex>=6,source=as[0],target=bs[0],side=Math.random()<.5?as:bs,victims=w.citizens.filter(c=>side.some(x=>x.id===c.homeSettlementId)),loss=Math.min(victims.length,Math.max(1,Math.floor(w.citizens.length*.015))),gone=new Set();
       for(let i=0;i<loss&&victims.length;i++){const ix=Math.floor(Math.random()*victims.length);gone.add(victims[ix].id);victims.splice(ix,1);}if(gone.size)w.citizens=w.citizens.filter(c=>!gone.has(c.id));
-      wr.visualAction={type:advanced?"projectile":"soldiers",from:{x:source.x,z:source.z},to:{x:target.x,z:target.z},at:Date.now()};addEvent(w,advanced?"장거리 공격":"무장 병력의 진격",advanced?a.name+"의 장거리 공격이 "+b.name+"의 거점으로 향했습니다.":a.name+"의 무장 병력이 "+b.name+" 영토로 진격했습니다.",advanced?"🚀":"🪖","milestone");
+      wr.visualAction={type:advanced?"projectile":"soldiers",from:{x:source.x,z:source.z},to:{x:target.x,z:target.z},at:Date.now()};addEvent(w,advanced?"미사일 발사":"무장 병력의 진격",advanced?a.name+"의 미사일이 "+b.name+"의 거점을 향해 날아갑니다.":a.name+"의 무장 병력이 "+b.name+" 영토로 진격했습니다.",advanced?"🚀":"🪖","milestone");
       if(Math.random()<.12){target.nationId=a.id;addEvent(w,"영토 점령",a.name+"이 "+target.name+"을 점령했습니다.","🏳️","milestone");}
       if(Math.random()<.1||w.citizens.length<2){wr.active=false;a.atWarWith=a.atWarWith.filter(id=>id!==b.id);b.atWarWith=b.atWarWith.filter(id=>id!==a.id);addEvent(w,"전쟁 종결",a.name+"과 "+b.name+" 사이의 전쟁이 종료되었습니다.","🕊️","milestone");}
       syncSettlementPopulations(w);
@@ -322,7 +322,7 @@
       addEvent(t.name+" 발견!",t.desc,t.icon,"discovery");reactToEvent(w,t.name+" 발견!","discovery");
       if(w.techIndex===1){w.food=Math.min(100,w.food+12);addEvent(w,"이동 생활의 끝, 첫 정착","씨앗을 심고 수확을 기다리기로 했습니다. 이제 이곳은 잠시 머무는 곳이 아니라 집입니다.","🏡","milestone");}
       if(w.techIndex===2){addEvent(w,"철기 시대의 시작","더 단단한 도구가 농사와 건축, 생활을 바꾸기 시작했습니다.","⚒️","milestone");}
-      if(w.techIndex===3){w.settlements=Math.max(2,w.settlements);addEvent(w,"문자로 남긴 첫 기록","이제 중요한 지식과 약속을 다음 세대에 전할 수 있습니다.","📜","milestone");}
+      if(w.techIndex===3){if(w.settlementData.length<2&&w.population>=8)createSettlementInWorld(w,false);syncSettlementPopulations(w);addEvent(w,"문자로 남긴 첫 기록","이제 중요한 지식과 약속을 다음 세대에 전할 수 있습니다. 기록과 교류가 늘며 새로운 정착지가 생길 수 있습니다.","📜","milestone");}
       if(w.techIndex===5){w.environment=Math.max(0,w.environment-5);addEvent(w,"산업 활동의 확대","생산량이 늘기 시작했지만 자원 소비와 환경 부담도 커지고 있습니다.","🏭","nature");}
       if(w.techIndex===6){addEvent(w,"전기의 발견","자연의 전기 현상을 이해하기 시작했습니다. 불빛이 일상에 퍼지기까지는 더 많은 발명이 필요합니다.","⚡","milestone");}
       unlockAchievements(w);
