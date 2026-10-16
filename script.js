@@ -399,9 +399,6 @@
     const end=e=>{points.delete(e.pointerId);if(points.size<2){startDistance=0;startMid=null;}if(points.size===1){dragStart=[...points.values()][0];lastMid=dragStart;}else dragStart=null;};
     map.addEventListener("pointerup",end);map.addEventListener("pointercancel",end);map.addEventListener("lostpointercapture",end);
     map.addEventListener("wheel",e=>{if(e.target.closest(".map-toolbar,.map-overlay-head,.map-caption,.tool-toggle"))return;e.preventDefault();applyZoom(zoom*(e.deltaY<0?1.12:.89));},{passive:false});
-    document.querySelectorAll("[data-scale]").forEach(btn=>btn.addEventListener("click",()=>{zoom=1;if(has3d){window.World3D.setScale(btn.dataset.scale);window.World3D.setZoom(1);}else{const scene=$("mapScene");if(scene)scene.style.transform="translate3d(0,0,0) scale(1)";}}));
-    $("zoomInBtn").addEventListener("click",()=>applyZoom(zoom*1.22));
-    $("zoomOutBtn").addEventListener("click",()=>applyZoom(zoom/1.22));
     window.addEventListener("world3dcitizenclick",e=>{if(e.detail&&e.detail.id)showCitizen(e.detail.id);});
     applyZoom(1);
   }
