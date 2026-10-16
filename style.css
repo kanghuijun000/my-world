@@ -285,3 +285,16 @@ body.world-active #worldView .map-scene .geography{pointer-events:none}
 .scale-city .map-citizen{scale:1}
 .scale-village .map-citizen{scale:1.15}
 @media(prefers-reduced-motion:reduce){.map-citizen,.map-citizen .citizen-body{animation:none!important}.map-scene{transition:none!important}}
+
+
+/* v9: immersive procedural 3D terrain and people */
+.world3d-host{position:absolute;inset:0;z-index:1;overflow:hidden;border-radius:inherit;background:linear-gradient(#a7c5d4,#c1d6ce 58%,#536d55)}
+.world3d-canvas{display:block;width:100%;height:100%;outline:none;touch-action:none}
+.world-map.has-world3d .map-scene{display:none!important}
+.world-map.has-world3d .map-stars,.world-map.has-world3d .map-grid-lines,.world-map.has-world3d .map-glow{display:none!important}
+.world-map.has-world3d .map-marker,.world-map.has-world3d .map-town{z-index:5;pointer-events:none}
+.world-map.has-world3d .map-label,.world-map.has-world3d .map-coordinates,.world-map.has-world3d .map-scale-note{z-index:6;pointer-events:none}
+.world-map.has-world3d .map-scale-note{background:#102a35a8;border:1px solid #d5f1f033;border-radius:7px;padding:5px 7px;bottom:8px}
+.world-map.has-world3d .map-coordinates{background:#102a35a8;padding:4px 6px;border-radius:5px}
+.world-map.has-world3d .map-town,.world-map.has-world3d .map-marker{display:none}
+@media(prefers-reduced-motion:reduce){.world3d-canvas{scroll-behavior:auto}}
