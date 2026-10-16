@@ -42,6 +42,7 @@
   const icons = ["🧑‍🌾","🧑‍🔬","🧑‍🎨","🧑‍🏫","🧑‍🔧","🧑‍🚀","🧑‍⚕️","🧑‍🍳","🧑‍🌾","🧑‍💼"];
   let worlds = loadWorlds();
   let activeId = null;
+  let selectedSettlementId = null;
   let activeFilter = "all";
   let activeScale = "world";
   let toastTimer = null;
@@ -143,7 +144,31 @@
   function updateSettlements(w){ensureSettlements(w);w.settlementData.forEach(a=>{a.environment=settlementEnvironment(w,a);a.level=Math.max(a.level||0,Math.max(0,w.techIndex));a.population=Math.max(0,Math.round(a.population*.96+Math.max(1,Math.floor(w.population/w.settlementData.length))*.04+(w.food>25?1:0)-(w.food<12?2:0)));a.type=settlementType(w,a);a.radius=Math.max(2.7,Math.min(15,2.7+Math.sqrt(a.population)*.72+(a.level>=5?2:0)));});
     const ss=w.settlementData;for(let i=0;i<ss.length;i++)for(let j=i+1;j<ss.length;j++){const a=ss[i],b=ss[j];if(a.nationId===b.nationId)continue;const n=w.nations.find(n=>n.id===a.nationId),m=w.nations.find(n=>n.id===b.nationId);if(!n||!m)continue;const war=n.atWarWith.includes(m.id);if(!war&&Math.hypot(a.x-b.x,a.z-b.z)<34&&Math.random()<.025){n.atWarWith.push(m.id);m.atWarWith.push(n.id);addEvent(w,"국경 분쟁 발발",a.name+"과 "+b.name+" 사이에 영역 분쟁이 시작됐습니다.","⚔️","milestone");}else if(war&&Math.random()<.1){const loser=Math.random()<.5?a:b,winner=loser===a?b:a;loser.population=Math.floor(loser.population*.6);if(loser.population<=2){w.settlementData=w.settlementData.filter(x=>x.id!==loser.id);w.settlements=w.settlementData.length;addEvent(w,"정착지의 몰락",loser.name+"이 전쟁으로 사라졌습니다. "+winner.name+"의 영향력이 커졌습니다.","🏚️","milestone");}else addEvent(w,"전쟁으로 인한 인구 감소",loser.name+"의 인구와 영역이 줄었습니다.","⚔️","milestone");n.atWarWith=n.atWarWith.filter(id=>id!==m.id);m.atWarWith=m.atWarWith.filter(id=>id!==n.id);}}
     if(ss.length>=2&&w.nations.length===1&&w.techIndex>=2&&Math.random()<.12){const a=ss[ss.length-1],id="nation-"+uid(),n={id,name:nationNames[w.nations.length%nationNames.length],settlementIds:[a.id],atWarWith:[],alive:true};w.nations.push(n);w.nations[0].settlementIds=w.nations[0].settlementIds.filter(x=>x!==a.id);a.nationId=id;addEvent(w,"새로운 국가의 등장",n.name+"이 독립 세력으로 등장했습니다.","🏳️","milestone");}}
-  function showSettlement(id){const w=activeWorld(),a=w?.settlementData?.find(x=>x.id===id);if(!a)return;const n=w.nations.find(n=>n.id===a.nationId);showModal(a.name,"<div class='form-field'><label>유형</label><div class='modal-note'>"+esc(a.type||settlementType(w,a))+"</div></div><div class='form-field'><label>인구</label><div class='modal-note'>"+Number(a.population||0).toLocaleString("ko-KR")+"명</div></div><div class='form-field'><label>주변 환경</label><div class='modal-note'>"+esc(a.environment||settlementEnvironment(w,a))+"</div></div><div class='form-field'><label>소속 국가</label><div class='modal-note'>"+esc(n?.name||"독립 정착지")+" · "+(n?.atWarWith?.length?"분쟁 중":"평화")+"</div></div><div class='form-field'><label>영역 규모</label><div class='modal-note'>반경 "+Number(a.radius||3).toFixed(1)+"</div></div>",[{label:"닫기",className:"primary-btn",onClick:closeModal}],"SETTLEMENT PROFILE");}
+  function settlementCurrentStatus(w,a){
+    const nation=w.nations.find(n=>n.id===a.nationId);
+    const population=Number(a.population||0);
+    if(population<=2||w.environment<=10||w.food<=5)return "멸망 위기";
+    if(nation?.atWarWith?.length)return "전쟁 중";
+    if(w.food<20||w.resources<15||population<5)return "빈곤";
+    return "일상";
+  }
+  function renderSettlementInfo(w=activeWorld()){
+    const title=$("settlementTitleBar"),populationInfo=$("worldPopulationInfo"),details=$("settlementDetails"),nameInput=$("settlementNameInput");
+    if(!w){selectedSettlementId=null;title.classList.add("hidden");populationInfo.classList.remove("hidden");details.classList.add("hidden");return;}
+    const a=w.settlementData.find(x=>x.id===selectedSettlementId);
+    if(!a){
+      selectedSettlementId=null;title.classList.add("hidden");populationInfo.classList.remove("hidden");details.classList.add("hidden");
+      $("worldTotalPopulation").textContent=Number(w.population||0).toLocaleString("ko-KR")+"명";
+      return;
+    }
+    title.classList.remove("hidden");populationInfo.classList.add("hidden");details.classList.remove("hidden");
+    if(document.activeElement!==nameInput)nameInput.value=a.name||"이름 없는 마을";
+    $("settlementPopulationValue").textContent=Number(a.population||0).toLocaleString("ko-KR")+"명";
+    $("settlementTypeValue").textContent=a.type||settlementType(w,a);
+    $("settlementEnvironmentValue").textContent=a.environment||settlementEnvironment(w,a);
+    $("settlementStatusValue").textContent=settlementCurrentStatus(w,a);
+  }
+  function showSettlement(id){const w=activeWorld();if(!w?.settlementData?.some(x=>x.id===id))return;selectedSettlementId=id;renderSettlementInfo(w);}
   function advanceOneTick(w){
     if(w.paused)return;
     const speed=w.speed||1;
@@ -205,6 +230,7 @@
     $("playPauseBtn").textContent=w.paused?"▶":"Ⅱ";$("playPauseBtn").setAttribute("aria-label",w.paused?"시간 재개":"일시 정지");
     $("runState").classList.toggle("paused",w.paused);$("runState").innerHTML="<i></i>"+(w.paused?"일시 정지":"진행 중");
     $("populationStat").textContent=w.population.toLocaleString("ko-KR")+"명";$("techStat").textContent=techLabel(w);$("natureStat").textContent=environmentLabel(w);$("settlementStat").textContent=w.settlements+"곳";
+    renderSettlementInfo(w);
     $("eventCount").textContent=w.events.length+"개 기록";
     const importantEvents=w.events.filter(e=>e.category==="milestone"||e.category==="achievement"||/세계의 탄생|불의 활용|불의 시대|전기의 발견|철기 시대|새로운 도시|새로운 마을|정착|산업 혁명|디지털 시대|문자로 남긴/.test(e.title));
     $("eventFeed").innerHTML=importantEvents.slice(0,8).map(e=>'<div class="event-item"><div class="event-icon">'+esc(e.icon)+'</div><div class="event-content"><strong>'+esc(e.title)+(e.category==="achievement"?' <span class="event-tag">ACHIEVEMENT</span>':'')+'</strong><p>'+esc(e.description)+'</p><time>'+(Math.floor(Math.max(0,(e.day||1)-1)/365)).toLocaleString("ko-KR")+"년 · "+e.day+"일 차</time></div></div>").join("")||'<div class="empty-inline">아직 기록이 없습니다.</div>';
@@ -262,8 +288,8 @@
       }
     }catch(e){}
   }
-  function openWorld(id){if(!worlds.some(w=>w.id===id))return;requestLandscape();activeId=id;activeFilter="all";activeScale="world";if(window.World3D)window.World3D.setScale("world");document.body.classList.add("world-active");document.body.classList.remove("tools-open");$("toolToggleBtn").setAttribute("aria-expanded","false");$("toolToggleBtn").querySelector(".tool-toggle-label").textContent="도구 열기";$("homeView").classList.add("hidden");$("worldView").classList.remove("hidden");$("worldMenu").classList.add("hidden");$("reactionFilters").querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.filter==="all"));renderWorld();requestAnimationFrame(()=>{if(window.World3D){window.World3D.resize();window.World3D.setZoom(3.2);}});window.scrollTo({top:0,behavior:"smooth"});}
-  function goHome(){activeId=null;document.body.classList.remove("world-active","tools-open");$("worldView").classList.add("hidden");$("homeView").classList.remove("hidden");$("worldMenu").classList.add("hidden");renderHome();window.scrollTo({top:0,behavior:"smooth"});}
+  function openWorld(id){if(!worlds.some(w=>w.id===id))return;requestLandscape();selectedSettlementId=null;activeId=id;activeFilter="all";activeScale="world";if(window.World3D)window.World3D.setScale("world");document.body.classList.add("world-active");document.body.classList.remove("tools-open");$("toolToggleBtn").setAttribute("aria-expanded","false");$("toolToggleBtn").querySelector(".tool-toggle-label").textContent="도구 열기";$("homeView").classList.add("hidden");$("worldView").classList.remove("hidden");$("worldMenu").classList.add("hidden");$("reactionFilters").querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.filter==="all"));renderWorld();requestAnimationFrame(()=>{if(window.World3D){window.World3D.resize();window.World3D.setZoom(3.2);}});window.scrollTo({top:0,behavior:"smooth"});}
+  function goHome(){selectedSettlementId=null;activeId=null;document.body.classList.remove("world-active","tools-open");$("worldView").classList.add("hidden");$("homeView").classList.remove("hidden");$("worldMenu").classList.add("hidden");renderHome();window.scrollTo({top:0,behavior:"smooth"});}
   function showModal(title,body,buttons,kicker="WORLD LAB"){
     $("modalTitle").textContent=title;$("modalKicker").textContent=kicker;$("modalBody").innerHTML=body;$("modalFooter").innerHTML="";
     buttons.forEach(b=>{const el=document.createElement("button");el.type="button";el.className=b.className||"secondary-btn";el.textContent=b.label;el.addEventListener("click",b.onClick);$("modalFooter").appendChild(el);});
@@ -427,6 +453,7 @@
     $("zoomOutBtn").addEventListener("click",()=>applyZoom(zoom/1.22));
     window.addEventListener("world3dcitizenclick",e=>{if(e.detail&&e.detail.id){if(has3d)window.World3D.focusCitizen(e.detail.id);showCitizen(e.detail.id);}});
     window.addEventListener("world3dsettlementclick",e=>{if(e.detail&&e.detail.id)showSettlement(e.detail.id);});
+    window.addEventListener("world3dsettlementclear",()=>{selectedSettlementId=null;renderSettlementInfo(activeWorld());});
     applyZoom(3.2);
   }
   function bind(){
@@ -453,6 +480,19 @@
     $("commandForm").addEventListener("submit",e=>{e.preventDefault();const input=$("commandInput");executeCommand(input.value);input.value="";});
     $("reactionFilters").addEventListener("click",e=>{const b=e.target.closest("[data-filter]");if(!b)return;activeFilter=b.dataset.filter;$("reactionFilters").querySelectorAll("button").forEach(x=>x.classList.toggle("active",x===b));renderWorld();});
     $("citizenRefreshBtn").addEventListener("click",()=>{renderWorld();showToast("시민 목록을 새로고침했어요.");});
+    $("settlementNameInput").addEventListener("input",e=>{
+      const w=activeWorld(),a=w?.settlementData?.find(x=>x.id===selectedSettlementId),value=e.currentTarget.value.trim();
+      if(!a||!value)return;
+      a.name=value;save();
+    });
+    $("settlementNameInput").addEventListener("change",e=>{
+      const w=activeWorld(),a=w?.settlementData?.find(x=>x.id===selectedSettlementId);
+      if(!a)return;
+      const value=e.currentTarget.value.trim();
+      if(value)a.name=value;else e.currentTarget.value=a.name||"이름 없는 마을";
+      save();renderSettlementInfo(w);
+    });
+    $("settlementNameInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();e.currentTarget.blur();}});
     $("citizenList").addEventListener("click",e=>{const c=e.target.closest("[data-citizen]");if(c)showCitizen(c.dataset.citizen);});
     $("citizenList").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-citizen]")){e.preventDefault();showCitizen(e.target.dataset.citizen);}});
     $("modalCloseBtn").addEventListener("click",closeModal);$("modalBackdrop").addEventListener("click",e=>{if(e.target===$("modalBackdrop"))closeModal();});
