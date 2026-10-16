@@ -190,7 +190,7 @@
     $("achievementList").innerHTML=achievementDefs.map(a=>{const got=w.achievements.includes(a.id);return '<div class="achievement-item '+(got?"":"locked")+'"><div class="achievement-badge">'+(got?a.icon:"🔒")+'</div><div><strong>'+esc(a.name)+'</strong><small>'+esc(got?"달성 완료":a.desc)+'</small></div></div>';}).join("");
     $("citizenList").innerHTML=w.citizens.slice(0,12).map(c=>'<div class="citizen-card" data-citizen="'+esc(c.id)+'" role="button" tabindex="0"><div class="avatar">'+esc(c.icon||"🧑")+'</div><div><strong>'+esc(c.name)+'</strong><small>'+esc(c.job)+" · "+esc(c.trait)+'</small></div></div>').join("")+(w.citizens.length>12?'<div class="empty-inline">외 '+(w.citizens.length-12)+'명의 시민이 더 있습니다.</div>':"");
     $("mapCaption").textContent=({"world":"대륙의 전체 배치","continent":"대륙 내부의 국가 경계","country":"지역과 강의 흐름","city":"도시 구역과 도로망","village":"마을의 길과 개별 건물"})[activeScale]+(w.settlements>1?" · 정착지 "+w.settlements+"곳":"");
-    $("mapHeading").textContent=w.techIndex>=3?"문명의 세계":"푸른 행성";$("worldMap").className="world-map scale-"+activeScale;$("mapScaleBadge").textContent=levelNames[activeScale];$("worldMap").querySelector(".town-b").classList.toggle("hidden",w.settlements<2);
+    $("mapHeading").textContent=w.techIndex>=3?"문명의 세계":"푸른 행성";$("worldMap").classList.remove("scale-world","scale-continent","scale-country","scale-city","scale-village");$("worldMap").classList.add("scale-"+activeScale);$("mapScaleBadge").textContent=levelNames[activeScale];$("worldMap").querySelector(".town-b").classList.toggle("hidden",w.settlements<2);
     save();
   }
   function renderMapCitizens(w){
