@@ -98,7 +98,6 @@
     const level=SCALE[scaleName];const size=scaleName==="world"?54:scaleName==="continent"?42:scaleName==="country"?34:scaleName==="city"?26:19;
     scene.background=new THREE.Color(level<2?"#9bbfd0":level===2?"#a9c6d1":"#b7cbd1");
     scene.fog=new THREE.Fog(scene.background,level<2?35:level===2?27:20,level<2?95:level===2?65:48);
-    ground(size,level<2?90:70);
     if(scaleName==="world"){
       // Globe: blue ocean sphere with raised green land masses on its visible hemisphere.
       const globe=new THREE.Group();root.add(globe);
@@ -112,6 +111,7 @@
       camera.position.set(0,10,23);baseCameraPosition=camera.position.clone();baseLookY=6.5;camera.lookAt(0,baseLookY,0);
       for(let i=0;i<18;i++)tree((seeded(i+4)-.5)*size*.8,(seeded(i+18)-.5)*size*.8,.65+seeded(i+24)*.7);
     }else{
+      ground(size,level<2?90:70);
       // Broad-scale landscapes include mountain ridges, rivers and forest belts.
       for(let i=0;i<7;i++){
         const x=(i-3)*size*.115,z=-size*.28+seeded(i+40)*size*.12,h=1.4+seeded(i+7)*3;
@@ -152,10 +152,6 @@
         person(citizens[i]||{name:"시민 "+(i+1),job:"주민",id:"citizen-"+i},i,x,z,scaleName==="city"?.65:scaleName==="village"?.9:.6);
       }
       camera.position.set(0,scaleName==="city"?15:scaleName==="village"?10:17,scaleName==="city"?17:scaleName==="village"?12:23);baseCameraPosition=camera.position.clone();baseLookY=0;camera.lookAt(0,baseLookY,0);
-    }
-    if(scaleName==="world"){
-      const citizens=(worldData&&Array.isArray(worldData.citizens))?worldData.citizens:[];
-      for(let i=0;i<8;i++)person(citizens[i]||{name:"시민 "+(i+1),job:"주민",id:"citizen-"+i},i,(seeded(i+31)-.5)*9,(seeded(i+51)-.5)*7,.38);
     }
     updateCamera();
   }
