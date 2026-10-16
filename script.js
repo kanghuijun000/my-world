@@ -469,6 +469,9 @@
   init();
   requestLandscape();
   document.addEventListener("fullscreenchange",requestLandscape);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)requestLandscape();});
+  window.addEventListener("pageshow",requestLandscape);
+  window.addEventListener("focus",requestLandscape);
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
   }
