@@ -54,8 +54,13 @@
     const job = jobType && jobType !== "random" && jobType !== "custom" ? jobType : pick(jobs);
     return {id:citizenId(),name:pick(firstNames)+pick(["","", "",""]),age:Math.floor(18+Math.random()*43),trait:pick(traits),job,skill:Math.floor(1+Math.random()*5),memory:["세상의 첫날을 기억합니다."],relations:Math.floor(Math.random()*4),icon:pick(icons)};
   }
+  const settlementNames=["새벽들","강가마을","푸른언덕","돌개울","햇살터","바람골","은빛강","큰숲","별내","너른벌"];
+  const nationNames=["해돋이 연맹","강물 왕국","푸른들 공화국","산맥 동맹","큰숲 연방","별빛 제국"];
+  function makeSettlementRecord(i=0,tech=-1){const a=i*2.39996,d=10+Math.sqrt(i)*12;return {id:uid(),name:settlementNames[i%settlementNames.length],population:i?0:12,type:tech>=5?"발전 도시":tech>=1?"농경 마을":"수렵·채집 야영지",x:Math.cos(a)*d-7,z:Math.sin(a)*d+6,radius:tech>=5?7:tech>=1?4.8:2.7,level:Math.max(0,tech),nationId:"nation-0",alive:true,relations:{}};}
+  function ensureSettlements(w){if(!Array.isArray(w.settlementData))w.settlementData=[];w.settlementData=w.settlementData.filter(x=>x&&x.id&&x.alive!==false);if(!w.settlementData.length)for(let i=0;i<Math.max(1,w.settlements||1);i++)w.settlementData.push(makeSettlementRecord(i,w.techIndex));if(!Array.isArray(w.nations)||!w.nations.length)w.nations=[{id:"nation-0",name:nationNames[0],settlementIds:w.settlementData.map(x=>x.id),atWarWith:[],alive:true}];w.nations.forEach(n=>{n.settlementIds=Array.isArray(n.settlementIds)?n.settlementIds:[];n.atWarWith=Array.isArray(n.atWarWith)?n.atWarWith:[];});w.settlementData.forEach(x=>{if(!x.nationId||!w.nations.some(n=>n.id===x.nationId))x.nationId=w.nations[0].id;});w.settlements=w.settlementData.length;}
   function makeWorld(name){
-    const w={id:uid(),name:name.trim(),createdAt:Date.now(),elapsedDays:0,paused:false,speed:1,population:12,settlements:1,techIndex:-1,research:0,environment:100,food:100,resources:100,gravity:9.8,temperature:15,oxygen:21,events:[],reactions:[],citizens:[],achievements:[],filter:"all",manualResearch:0};
+    const w={id:uid(),name:name.trim(),createdAt:Date.now(),elapsedDays:0,paused:false,speed:1,population:12,settlements:1,settlementData:[],nations:[],techIndex:-1,research:0,environment:100,food:100,resources:100,gravity:9.8,temperature:15,oxygen:21,events:[],reactions:[],citizens:[],achievements:[],filter:"all",manualResearch:0};
+    w.settlementData=[makeSettlementRecord(0,-1)];w.nations=[{id:"nation-0",name:nationNames[0],settlementIds:[w.settlementData[0].id],atWarWith:[],alive:true}];
     for(let i=0;i<w.population;i++)w.citizens.push(newCitizen());
     addEvent(w,"세계의 탄생","새로운 세계가 모습을 드러냈습니다. 아직 모든 것이 시작 단계입니다.","🌍","system");
     addReaction(w,"positive","하린","호기심 많은","여긴 어떤 곳일까? 우리만의 이야기가 시작되겠지!","세계의 탄생");
@@ -72,7 +77,7 @@
     w.speed=Math.max(1,Math.min(100,Number(w.speed)||1));w.techIndex=Number.isFinite(w.techIndex)?w.techIndex:-1;
     w.research=Number(w.research)||0;w.environment=Math.max(0,Math.min(100,Number(w.environment??100)));w.food=Math.max(0,Number(w.food??100));w.resources=Math.max(0,Number(w.resources??100));
     w.gravity=Number(w.gravity??9.8);w.temperature=Number(w.temperature??15);w.oxygen=Number(w.oxygen??21);
-    w.events=Array.isArray(w.events)?w.events:[];w.reactions=Array.isArray(w.reactions)?w.reactions:[];w.citizens=Array.isArray(w.citizens)?w.citizens:[];w.achievements=Array.isArray(w.achievements)?w.achievements:[];
+    w.events=Array.isArray(w.events)?w.events:[];w.reactions=Array.isArray(w.reactions)?w.reactions:[];w.citizens=Array.isArray(w.citizens)?w.citizens:[];w.achievements=Array.isArray(w.achievements)?w.achievements:[];ensureSettlements(w);
     w.paused=!!w.paused;w.manualResearch=Number(w.manualResearch)||0;
     return w;
   }
@@ -131,6 +136,13 @@
     addEvent(w,title,"새 주민들이 공동체에 합류했습니다. 인구 증가에 따라 식량과 거주 공간의 수요도 커졌습니다.","♟","people");
     unlockAchievements(w);save();renderWorld();
   }
+  function settlementEnvironment(w,a){const x=a.x||0,z=a.z||0;if(x>25&&z>5)return "건조 지대";if(z<-25||Math.abs(x)>40)return "산지";if(Math.abs(x-4)<18&&z>-28&&z<24)return "강변 비옥지";if(z>-28&&z<24&&x>-32&&x<28)return "초원 농경지";return "숲과 사냥터";}
+  function settlementType(w,a){if(a.level>=5||a.population>=80)return "고도로 발전한 도시";if(a.level>=3||a.population>=45)return "산업·상업 도시";if(a.level>=2||a.population>=25)return "성장 중인 도시";if(a.level>=1)return /비옥지|농경지/.test(settlementEnvironment(w,a))?"농경 마을":"정착 마을";return "수렵·채집 야영지";}
+  function createSettlementInWorld(w,city){const i=w.settlementData.length,a=makeSettlementRecord(i,w.techIndex);a.name=settlementNames[(i+Math.floor(Math.random()*settlementNames.length))%settlementNames.length];a.population=city?Math.max(20,Math.floor(w.population*.18)):Math.max(5,Math.floor(w.population*.12));a.level=w.techIndex;a.radius=city?7:4.8;a.nationId=w.nations[0]?.id||"nation-0";w.settlementData.push(a);w.settlements=w.settlementData.length;const n=w.nations.find(n=>n.id===a.nationId);if(n)n.settlementIds.push(a.id);}
+  function updateSettlements(w){ensureSettlements(w);w.settlementData.forEach(a=>{a.environment=settlementEnvironment(w,a);a.level=Math.max(a.level||0,Math.max(0,w.techIndex));a.population=Math.max(0,Math.round(a.population*.96+Math.max(1,Math.floor(w.population/w.settlementData.length))*.04+(w.food>25?1:0)-(w.food<12?2:0)));a.type=settlementType(w,a);a.radius=Math.max(2.7,Math.min(15,2.7+Math.sqrt(a.population)*.72+(a.level>=5?2:0));});
+    const ss=w.settlementData;for(let i=0;i<ss.length;i++)for(let j=i+1;j<ss.length;j++){const a=ss[i],b=ss[j];if(a.nationId===b.nationId)continue;const n=w.nations.find(n=>n.id===a.nationId),m=w.nations.find(n=>n.id===b.nationId);if(!n||!m)continue;const war=n.atWarWith.includes(m.id);if(!war&&Math.hypot(a.x-b.x,a.z-b.z)<34&&Math.random()<.025){n.atWarWith.push(m.id);m.atWarWith.push(n.id);addEvent(w,"국경 분쟁 발발",a.name+"과 "+b.name+" 사이에 영역 분쟁이 시작됐습니다.","⚔️","milestone");}else if(war&&Math.random()<.1){const loser=Math.random()<.5?a:b,winner=loser===a?b:a;loser.population=Math.floor(loser.population*.6);if(loser.population<=2){w.settlementData=w.settlementData.filter(x=>x.id!==loser.id);w.settlements=w.settlementData.length;addEvent(w,"정착지의 몰락",loser.name+"이 전쟁으로 사라졌습니다. "+winner.name+"의 영향력이 커졌습니다.","🏚️","milestone");}else addEvent(w,"전쟁으로 인한 인구 감소",loser.name+"의 인구와 영역이 줄었습니다.","⚔️","milestone");n.atWarWith=n.atWarWith.filter(id=>id!==m.id);m.atWarWith=m.atWarWith.filter(id=>id!==n.id);}}
+    if(ss.length>=2&&w.nations.length===1&&w.techIndex>=2&&Math.random()<.12){const a=ss[ss.length-1],id="nation-"+uid(),n={id,name:nationNames[w.nations.length%nationNames.length],settlementIds:[a.id],atWarWith:[],alive:true};w.nations.push(n);w.nations[0].settlementIds=w.nations[0].settlementIds.filter(x=>x!==a.id);a.nationId=id;addEvent(w,"새로운 국가의 등장",n.name+"이 독립 세력으로 등장했습니다.","🏳️","milestone");}}
+  function showSettlement(id){const w=activeWorld(),a=w?.settlementData?.find(x=>x.id===id);if(!a)return;const n=w.nations.find(n=>n.id===a.nationId);showModal(a.name,"<div class='form-field'><label>유형</label><div class='modal-note'>"+esc(a.type||settlementType(w,a))+"</div></div><div class='form-field'><label>인구</label><div class='modal-note'>"+Number(a.population||0).toLocaleString("ko-KR")+"명</div></div><div class='form-field'><label>주변 환경</label><div class='modal-note'>"+esc(a.environment||settlementEnvironment(w,a))+"</div></div><div class='form-field'><label>소속 국가</label><div class='modal-note'>"+esc(n?.name||"독립 정착지")+" · "+(n?.atWarWith?.length?"분쟁 중":"평화")+"</div></div><div class='form-field'><label>영역 규모</label><div class='modal-note'>반경 "+Number(a.radius||3).toFixed(1)+"</div></div>",[{label:"닫기",className:"primary-btn",onClick:closeModal}],"SETTLEMENT PROFILE");}
   function advanceOneTick(w){
     if(w.paused)return;
     const speed=w.speed||1;
@@ -165,12 +177,13 @@
     const crossed90=Math.floor(day/90)>Math.floor(Math.max(0,oldDay)/90);
     const crossed365=Math.floor(day/365)>Math.floor(Math.max(0,oldDay)/365);
     if(day>0&&crossed90){
+      updateSettlements(w);
       if(w.population>=12&&w.food>35&&w.environment>35&&Math.random()<.42){
         const count=Math.min(2,Math.floor((w.population/18)+Math.random()));
         if(count>0){for(let i=0;i<count;i++)w.citizens.push(newCitizen("random"));w.population=w.citizens.length;addEvent(w,"공동체 인구 증가","식량과 환경 조건이 비교적 안정적이어서 새로운 주민이 태어나거나 합류했습니다.","👶","people");unlockAchievements(w);}
       }
-      if(w.techIndex>=1&&w.settlements<2&&w.population>=18&&Math.random()<.5){w.settlements=2;addEvent(w,"새로운 마을 건설","몇몇 가족이 새 터전을 만들었습니다. 세계 지도에 두 번째 마을이 생겼습니다.","🏡","milestone");unlockAchievements(w);}
-      else if(w.techIndex>=5&&w.settlements>=2&&w.settlements<3&&w.population>=35&&Math.random()<.25){w.settlements=3;addEvent(w,"새로운 도시의 탄생","사람과 기술이 모이며 마을 하나가 도시로 성장했습니다.","🌆","milestone");unlockAchievements(w);}
+      if(w.techIndex>=1&&w.settlements<2&&w.population>=18&&Math.random()<.5){createSettlementInWorld(w,false);addEvent(w,"새로운 마을 건설","주변 환경에 맞는 새 정착지가 만들어졌습니다.","🏡","milestone");unlockAchievements(w);}
+      else if(w.techIndex>=5&&w.settlements>=2&&w.settlements<5&&w.population>=35&&Math.random()<.25){createSettlementInWorld(w,true);addEvent(w,"새로운 도시의 탄생","인구와 기술이 모인 정착지가 도시로 성장했습니다.","🌆","milestone");unlockAchievements(w);}
       if(w.environment<35&&Math.random()<.3){addEvent(w,"환경 부담 증가","자원 소비와 정착지 확장으로 자연 환경이 압박을 받고 있습니다.","🌫️","nature");}
     }
     if(day>0&&crossed365){unlockAchievements(w);}
@@ -184,7 +197,7 @@
   }
   function renderWorld(){
     const w=activeWorld();if(!w)return;
-    if(window.World3D){window.World3D.setWorld(w);window.World3D.resize();}
+    ensureSettlements(w);if(window.World3D){window.World3D.setWorld(w);window.World3D.resize();}
     $("activeWorldName").textContent=w.name;$("worldSubtitle").textContent=w.techIndex>=3?"지식과 정착지가 성장하고 있습니다.":"문명의 첫 장을 관찰하세요.";
     $("worldYear").textContent=formatYear(w);$("worldDay").textContent=formatDays(w);
     $("speedSlider").value=w.speed;$("speedLabel").textContent=w.speed+"×";
@@ -412,6 +425,7 @@
     $("zoomInBtn").addEventListener("click",()=>applyZoom(zoom*1.22));
     $("zoomOutBtn").addEventListener("click",()=>applyZoom(zoom/1.22));
     window.addEventListener("world3dcitizenclick",e=>{if(e.detail&&e.detail.id){if(has3d)window.World3D.focusCitizen(e.detail.id);showCitizen(e.detail.id);}});
+    window.addEventListener("world3dsettlementclick",e=>{if(e.detail&&e.detail.id)showSettlement(e.detail.id);});
     applyZoom(3.2);
   }
   function bind(){
