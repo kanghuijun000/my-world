@@ -2,7 +2,7 @@
 (() => {
   "use strict";
   const WORLD=120, clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-  let host,renderer,scene,camera,root,people=[],settlements=[],mini,miniCtx,frame=0,clock=0,zoom=3.2,worldData=null,raycaster,mouse,lookX=0,lookZ=0,dragging=false,lastBuiltTech=-999;
+  let host,renderer,scene,camera,root,people=[],settlements=[],mini,miniCtx,frame=0,clock=0,lastFrameTime=0,zoom=3.2,worldData=null,raycaster,mouse,lookX=0,lookZ=0,dragging=false,lastBuiltTech=-999;
   const mats={};
   function rand(n){const x=Math.sin(n*127.1+311.7)*43758.5453123;return x-Math.floor(x);}
   function mat(color,roughness=.9,metalness=0){const k=color+"|"+roughness+"|"+metalness;if(!mats[k])mats[k]=new THREE.MeshStandardMaterial({color,roughness,metalness});return mats[k];}
@@ -21,8 +21,8 @@
       scene.add(new THREE.HemisphereLight(0xe8f5ff,0x65714d,2.05));
       const sun=new THREE.DirectionalLight(0xffedcf,2.8);sun.position.set(-35,55,25);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-75;sun.shadow.camera.right=75;sun.shadow.camera.top=75;sun.shadow.camera.bottom=-75;scene.add(sun);
       root=group(scene);raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
-      makeMinimap();buildWorld();resize();host.parentElement.addEventListener("click",onClick);window.addEventListener("resize",resize);animate(0);return true;
-    }catch(e){try{renderer?.dispose();renderer?.domElement.remove();}catch(_){}renderer=null;return false;}
+      makeMinimap();buildWorld();resize();host.parentElement.addEventListener("click",onClick);window.addEventListener("resize",resize);window.addEventListener("orientationchange",()=>setTimeout(resize,180));animate(0);return true;
+    }catch(e){console.error("3D world initialization failed:",e);try{renderer?.dispose();renderer?.domElement.remove();}catch(_){}renderer=null;return false;}
   }
   function makeMinimap(){
     const box=document.createElement("div");box.className="world-minimap";
@@ -129,12 +129,12 @@
     for(let i=0;i<13;i++){const x=-42+rand(i+1500)*84,z=-38+rand(i+1600)*76;const rock=mesh(root,new THREE.DodecahedronGeometry(.5+rand(i+1700)*1.3),mat("#858e83"),x,heightAt(x,z)+.4,z);rock.scale.y=.6;}
     if(!Number.isFinite(lookX)||!Number.isFinite(lookZ)){lookX=0;lookZ=0;}updateCamera();drawMinimap();
   }
-  function updateCamera(){if(!camera)return;const distance=34/zoom;camera.position.set(lookX+distance*.16,1.4+distance*.48,lookZ+distance*.72);camera.lookAt(lookX,1.0,lookZ);scene.fog.near=28/Math.sqrt(zoom);scene.fog.far=125/Math.sqrt(zoom);}
+  function updateCamera(){if(!camera)return;const distance=42/zoom;camera.position.set(lookX+distance*.18,1.0+distance*.82,lookZ+distance*.58);camera.lookAt(lookX,1.8,lookZ);scene.fog.near=42/Math.sqrt(zoom);scene.fog.far=190/Math.sqrt(zoom);}
   function setZoom(v){zoom=clamp(v,.55,4.8);updateCamera();drawMinimap();return zoom;}
   function pan(dx,dy){const scale=34/zoom/Math.max(250,host?.clientHeight||500);lookX=clamp(lookX-dx*scale,-WORLD*.48,WORLD*.48);lookZ=clamp(lookZ-dy*scale,-WORLD*.48,WORLD*.48);updateCamera();drawMinimap();}
   function setScale(){/* Intentionally no separate world/country/city modes: one continuous world. */}
   function setWorld(w){worldData=w;if(root){const n=(w&&Array.isArray(w.citizens))?w.citizens.length:12;const expected=clamp(n||12,12,60);if(people.length!==expected||lastBuiltTech!==(Number.isFinite(w.techIndex)?w.techIndex:-1)||settlements.length!==clamp(Math.max(1,w.settlements||1,Math.floor(n/18)+1,(w.techIndex||0)>=3?2:1),1,8)){buildWorld();return;}people.forEach((p,i)=>{if(w.citizens[i])p.citizen=w.citizens[i];});drawMinimap();}}
-  function resize(){if(!renderer||!host)return;const r=host.getBoundingClientRect();if(r.width<1||r.height<1)return;renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();}
+  function resize(){if(!renderer||!host||!camera)return;const r=host.getBoundingClientRect();if(r.width<1||r.height<1)return;renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.4));renderer.setSize(Math.round(r.width),Math.round(r.height),false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();updateCamera();}
   function onClick(e){if(!renderer||!people.length)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-(e.clientY-rect.top)/rect.height*2+1;raycaster.setFromCamera(mouse,camera);const hits=raycaster.intersectObjects(people.map(p=>p.group),true);if(!hits.length)return;let o=hits[0].object;while(o.parent&&!people.some(p=>p.group===o))o=o.parent;const found=people.find(p=>p.group===o);if(found?.citizen?.id)window.dispatchEvent(new CustomEvent("world3dcitizenclick",{detail:{id:found.citizen.id}}));}
   function focusCitizen(id){const p=people.find(x=>x.citizen&&x.citizen.id===id);if(!p)return;lookX=p.group.position.x;lookZ=p.group.position.z;zoom=Math.max(zoom,3.1);updateCamera();drawMinimap();}
   function drawMinimap(){
@@ -162,6 +162,6 @@
     p.group.position.y=heightAt(p.group.position.x,p.group.position.z);
     if(p.chat>0){p.chat-=dt;if(p.nearby){p.group.lookAt(p.nearby.group.position.x,p.group.position.y+1,p.nearby.group.position.z);}}
   }
-  function animate(t){requestAnimationFrame(animate);const dt=Math.min(.04,Math.max(0,(t-clock.lastT||0)/1000));clock.lastT=t;clock+=dt;if(!renderer||!scene)return;people.forEach(p=>socialStep(p,dt));renderer.render(scene,camera);}
+  function animate(t){requestAnimationFrame(animate);const dt=Math.min(.04,Math.max(0,(t-lastFrameTime)/1000));lastFrameTime=t;clock+=dt;if(!renderer||!scene||!camera)return;try{people.forEach(p=>socialStep(p,dt));renderer.render(scene,camera);}catch(e){console.error("3D world render failed:",e);}}
   window.World3D={init,setScale,setZoom,getZoom:()=>zoom,setWorld,pan,resize,focusCitizen};
 })();
