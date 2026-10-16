@@ -89,7 +89,7 @@ html,body{min-height:100%;overscroll-behavior-x:none}
 .info-grid .event-feed,.info-grid .reaction-feed{max-height:320px;overflow:auto;padding-right:3px}
 .info-grid .achievement-list{grid-template-columns:1fr}
 .citizens-panel{margin-top:12px}
-.citizen-list{grid-template-columns:repeat(4,minmax(0,1fr))}
+.citizen-list{grid-template-columns:repeat(5,minmax(0,1fr))}
 .orientation-notice{display:none}
 @media (orientation:portrait){
   body{overflow:hidden}
