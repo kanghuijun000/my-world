@@ -310,7 +310,7 @@
     if(w.weather!=="clear"&&w.weatherUntilDay>0&&newDay>=w.weatherUntilDay)setWeather(w,"clear");
     if(w.weather==="rain"){w.food=Math.min(100,w.food+.035*speed);w.environment=Math.min(100,w.environment+.025*speed);}if(w.weather==="drought"){w.food=Math.max(0,w.food-.05*speed);w.environment=Math.max(0,w.environment-.025*speed);}
     if(w.weather==="storm"&&Math.random()<.008*speed)w.resources=Math.max(0,w.resources-1);
-    simulateEpidemic(w,speed);
+    simulateEpidemic(w,speed);simulateWar(w,speed);
     if(newDay>0&&Math.floor(newDay/365)>Math.floor(Math.max(0,oldDay)/365))simulateDemography(w,Math.floor(newDay/365)-Math.floor(Math.max(0,oldDay)/365));
     syncSettlementPopulations(w);
     if(w.food<20&&Math.floor(newDay/30)>Math.floor(Math.max(0,oldDay)/30)){w.food=Math.min(100,w.food+5);addEvent(w,"식량 확보 활동","주민들이 주변에서 먹을거리를 찾아 식량을 조금 확보했습니다.","🫐","system");}
