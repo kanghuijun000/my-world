@@ -7,11 +7,11 @@
   <meta name="description" content="하나의 거대한 3D 세계에서 지형과 기후, 시민과 문명의 성장을 관찰하는 시뮬레이션">
   <link rel="manifest" href="manifest.json">
   <title>나의 세계 · World Lab</title>
-  <link rel="stylesheet" href="style.css?v=15">
+  <link rel="stylesheet" href="style.css?v=16">
   <script src="https://js.puter.com/v2/"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-  <script src="world3d.js?v=10" defer></script>
-  <script src="script.js?v=22" defer></script>
+  <script src="world3d.js?v=11" defer></script>
+  <script src="script.js?v=23" defer></script>
 </head>
 <body>
   <div id="orientationNotice" class="orientation-notice" aria-live="polite">
@@ -101,7 +101,8 @@
           <div class="world-bottom-card">
             <div id="worldPopulationInfo" class="world-population-info"><span>세계 전체 인구</span><strong id="worldTotalPopulation">12명</strong></div>
             <div id="settlementDetails" class="settlement-details hidden">
-              <div class="settlement-detail"><span>거주 인구</span><strong id="settlementPopulationValue">0명</strong></div>
+              <div class="settlement-detail"><span>마을 인구</span><strong id="settlementPopulationValue">0명</strong></div>
+              <div class="settlement-detail"><span>국가 인구</span><strong id="settlementNationPopulationValue">0명</strong></div>
               <div class="settlement-detail"><span>유형</span><strong id="settlementTypeValue">정착지</strong></div>
               <div class="settlement-detail"><span>주변 환경</span><strong id="settlementEnvironmentValue">미확인</strong></div>
               <div class="settlement-detail"><span>현재 상태</span><strong id="settlementStatusValue">일상</strong></div>
