@@ -2,6 +2,7 @@
   "use strict";
   const STORAGE_KEY = "my-world-data-v1";
   const $ = (id) => document.getElementById(id);
+  let deferredInstallPrompt = null;
   const levelNames = {world:"연속 세계"};
   const techStages = [
     {name:"불의 활용",label:"불의 시대",need:5,icon:"🔥",desc:"불을 다루는 법을 익혔습니다."},
@@ -430,6 +431,14 @@
   }
   function bind(){
     $("startBtn").addEventListener("click",()=>{enterLandscapeMode();$("welcomeView").classList.add("hidden");$("homeView").classList.remove("hidden");renderHome();window.scrollTo({top:0,behavior:"smooth"});});
+    $("installAppBtn").addEventListener("click",async()=>{
+      if(!deferredInstallPrompt)return;
+      const installPrompt=deferredInstallPrompt;
+      deferredInstallPrompt=null;
+      $("installAppBtn").classList.add("hidden");
+      try{await installPrompt.prompt();await installPrompt.userChoice;}
+      catch(error){console.warn("PWA installation prompt failed:",error);}
+    });
     $("createWorldBtn").addEventListener("click",createWorldModal);$("emptyCreateBtn").addEventListener("click",createWorldModal);
     $("worldList").addEventListener("click",e=>{const menu=e.target.closest("[data-card-menu]");if(menu){e.stopPropagation();const w=worlds.find(x=>x.id===menu.dataset.cardMenu);if(w){showModal(w.name,'<p style="font-size:12px;color:#b8c6db">이 세계를 열거나 이름을 바꾸고, 복제 또는 삭제할 수 있습니다.</p>',[{label:"닫기",className:"secondary-btn",onClick:closeModal},{label:"열기",className:"primary-btn",onClick:()=>{closeModal();openWorld(w.id);}}]);}return;}const card=e.target.closest("[data-open-world]");if(card)openWorld(card.dataset.openWorld);});
     $("worldList").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-open-world]")){e.preventDefault();openWorld(e.target.dataset.openWorld);}});
@@ -466,6 +475,17 @@
     $("welcomeView").classList.remove("hidden");$("homeView").classList.add("hidden");$("worldView").classList.add("hidden");
     bind();renderHome();startSimulation();
   }
+  window.addEventListener("beforeinstallprompt",(event)=>{
+    event.preventDefault();
+    deferredInstallPrompt=event;
+    const installButton=$("installAppBtn");
+    if(installButton)installButton.classList.remove("hidden");
+  });
+  window.addEventListener("appinstalled",()=>{
+    deferredInstallPrompt=null;
+    const installButton=$("installAppBtn");
+    if(installButton)installButton.classList.add("hidden");
+  });
   init();
   requestLandscape();
   document.addEventListener("fullscreenchange",requestLandscape);
