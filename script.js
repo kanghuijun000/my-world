@@ -169,24 +169,74 @@
     $("settlementStatusValue").textContent=settlementCurrentStatus(w,a);
   }
   function showSettlement(id){const w=activeWorld();if(!w?.settlementData?.some(x=>x.id===id))return;selectedSettlementId=id;renderSettlementInfo(w);}
+  function physicsRisk(w){
+    let risk=0;const issues=[];
+    const g=Number(w.gravity),t=Number(w.temperature),o=Number(w.oxygen);
+    if(g<1||g>20){risk+=0.10;issues.push(g<1?"극저중력":"초고중력");}
+    else if(g<2||g>15){risk+=0.025;issues.push(g<2?"저중력":"고중력");}
+    else if(g<3||g>12){risk+=0.008;issues.push(g<3?"낮은 중력":"높은 중력");}
+    if(t<=-40||t>=60){risk+=0.22;issues.push(t<=-40?"극심한 혹한":"극심한 고온");}
+    else if(t<=-20||t>=45){risk+=0.075;issues.push(t<=-20?"혹한":"폭염");}
+    else if(t<=-10||t>=38){risk+=0.02;issues.push(t<=-10?"추위":"고온");}
+    if(o<=2||o>=38){risk+=0.30;issues.push(o<=2?"산소 부족":"산소 과다");}
+    else if(o<5||o>35){risk+=0.16;issues.push(o<5?"심각한 산소 부족":"높은 산소 농도");}
+    else if(o<10||o>30){risk+=0.07;issues.push(o<10?"산소 부족":"산소 과다");}
+    else if(o<15||o>26){risk+=0.015;issues.push(o<15?"낮은 산소 농도":"산소 농도 높음");}
+    risk=Math.min(0.75,risk);
+    return {riskPerDay:risk,issues,level:risk>=0.25?3:risk>=0.10?2:risk>0?1:0};
+  }
+  function updatePhysicsWarning(w,riskInfo=physicsRisk(w)){
+    const previous=Number(w.physicsWarningLevel||0),next=riskInfo.level;
+    if(previous===next)return;
+    w.physicsWarningLevel=next;
+    if(next===0){
+      if(previous>0)addEvent(w,"물리 환경 회복","중력·기온·산소 조건이 주민에게 위험한 범위를 벗어났습니다. 생존 위험이 낮아지고 있습니다.","🌤️","nature");
+      return;
+    }
+    const severity=next===3?"치명적":next===2?"위험":"주의";
+    const description="현재 조건: 중력 "+Number(w.gravity).toFixed(1)+" m/s², 기온 "+w.temperature+"°C, 산소 "+w.oxygen+"%. 위험 요인: "+riskInfo.issues.join(", ")+". 주민 사망 위험이 증가하고 출생과 문명 발전이 둔화됩니다.";
+    addEvent(w,"물리 환경 "+severity,description,"⚠️","nature");
+    const c=w.citizens.length?pick(w.citizens)[0]:null;
+    if(c)addReaction(w,"negative",c.name,c.trait,pick(["숨쉬기가 힘들고 몸이 버티기 어려워. 이 환경에 계속 노출되면 위험해!","기온과 중력, 대기 상태가 이상해. 빨리 환경을 바꿔야 해.","주변 환경이 생존에 위협이 되고 있어. 이대로라면 공동체가 위험해질 거야."]), "물리 환경 위험");
+  }
+  function applyPhysicsMortality(w,riskInfo,speed){
+    const oldCount=w.citizens.length;
+    if(!oldCount||riskInfo.riskPerDay<=0)return 0;
+    const chance=1-Math.exp(-riskInfo.riskPerDay*speed);
+    const survivors=[],dead=[];
+    for(const c of w.citizens){if(Math.random()<chance)dead.push(c);else survivors.push(c);}
+    if(!dead.length)return 0;
+    w.citizens=survivors;w.population=survivors.length;
+    const ratio=oldCount?survivors.length/oldCount:0;
+    if(Array.isArray(w.settlementData))w.settlementData.forEach(a=>{a.population=Math.max(0,Math.floor(Number(a.population||0)*ratio));});
+    const issue=riskInfo.issues.join(", ");
+    addEvent(w,"극한 환경으로 인한 사망",dead.length+"명의 주민이 "+issue+"의 영향으로 사망했습니다. 생존자 "+survivors.length+"명. 물리 조건을 조정하지 않으면 인구가 계속 감소할 수 있습니다.","🆘","nature");
+    if(survivors.length){
+      const c=pick(survivors);
+      addReaction(w,"negative",c.name,c.trait,"여러 이웃을 잃었어. "+issue+" 상태가 계속되면 우리 공동체가 사라질지도 몰라.","극한 환경으로 인한 사망");
+    }
+    if(survivors.length===0)addEvent(w,"문명 멸망","극한 물리 환경으로 모든 주민이 사망했습니다. 세계는 남아 있지만 문명은 더 이상 발전하지 않습니다. 물리 조건을 바꾸어도 사라진 주민은 자동으로 되살아나지 않습니다.","🏚️","nature");
+    return dead.length;
+  }
   function advanceOneTick(w){
     if(w.paused)return;
     const speed=w.speed||1;
     w.elapsedDays+=speed;
-    const pop=w.citizens.length;
+    let pop=w.citizens.length;
+    const riskInfo=physicsRisk(w);updatePhysicsWarning(w,riskInfo);
     w.food=Math.max(0,Math.min(100,w.food+0.05*speed-pop*0.002*speed));
     w.resources=Math.max(0,Math.min(100,w.resources+0.008*speed-pop*0.0005*speed));
-    const habitability=(w.gravity>=3&&w.gravity<=20&&w.temperature>-25&&w.temperature<48&&w.oxygen>=8&&w.oxygen<=35);
-    if(!habitability)w.environment=Math.max(0,w.environment-0.035*speed);
+    if(riskInfo.riskPerDay>0)w.environment=Math.max(0,w.environment-(0.025+riskInfo.riskPerDay*0.35)*speed);
     else if(w.population<25&&w.food>25)w.environment=Math.min(100,w.environment+0.012*speed);
     else if(w.population>40)w.environment=Math.max(0,w.environment-0.012*speed);
+    const physicsDeaths=applyPhysicsMortality(w,riskInfo,speed);pop=w.citizens.length;
     if(w.food<15&&pop>0&&Math.random()<Math.min(.35,.018*speed)){
       const c=w.citizens.pop();w.population=w.citizens.length;addEvent(w,"식량 부족","먹을거리가 부족해지며 공동체의 인구가 줄었습니다. 식량 생산이나 인구 규모를 살펴볼 필요가 있습니다.","🥀","nature");if(c)addReaction(w,"negative",c.name,c.trait,"먹을거리가 부족해지고 있어. 공동체가 식량을 확보해야 해.","식량 부족");
     }
     const oldDay=Math.floor(w.elapsedDays-speed);
     const newDay=Math.floor(w.elapsedDays);
     if(w.food<20&&Math.floor(newDay/30)>Math.floor(Math.max(0,oldDay)/30)){w.food=Math.min(100,w.food+5);addEvent(w,"식량 확보 활동","주민들이 주변에서 먹을거리를 찾아 식량을 조금 확보했습니다.","🫐","system");}
-    const researchGain=(0.025+pop*0.0018+(w.manualResearch?0.035:0))*speed;
+    const researchGain=pop>0?(0.025+pop*0.0018+(w.manualResearch?0.035:0))*Math.max(0,1-riskInfo.riskPerDay*2)*speed:0;
     w.research+=researchGain;
     if(w.techIndex+1<techStages.length&&w.research>=techStages[w.techIndex+1].need){
       w.techIndex++;
@@ -204,7 +254,7 @@
     const crossed365=Math.floor(day/365)>Math.floor(Math.max(0,oldDay)/365);
     if(day>0&&crossed90){
       updateSettlements(w);
-      if(w.population>=12&&w.food>35&&w.environment>35&&Math.random()<.42){
+      if(w.population>=12&&w.food>35&&w.environment>35&&riskInfo.riskPerDay<0.02&&Math.random()<.42){
         const count=Math.min(2,Math.floor((w.population/18)+Math.random()));
         if(count>0){for(let i=0;i<count;i++)w.citizens.push(newCitizen("random"));w.population=w.citizens.length;addEvent(w,"공동체 인구 증가","식량과 환경 조건이 비교적 안정적이어서 새로운 주민이 태어나거나 합류했습니다.","👶","people");unlockAchievements(w);}
       }
@@ -328,7 +378,7 @@
   }
   function physicsModal(){
     const w=activeWorld();if(!w)return;
-    showModal("물리법칙 설정",'<div class="physics-grid"><div class="physics-row"><label for="gravityInput">중력 강도</label><output id="gravityOut">'+w.gravity.toFixed(1)+' m/s²</output><input id="gravityInput" type="range" min="0.5" max="25" step="0.1" value="'+w.gravity+'"></div><div class="physics-row"><label for="tempInput">평균 기온</label><output id="tempOut">'+w.temperature+' °C</output><input id="tempInput" type="range" min="-80" max="80" step="1" value="'+w.temperature+'"></div><div class="physics-row"><label for="oxygenInput">대기 중 산소</label><output id="oxygenOut">'+w.oxygen+'%</output><input id="oxygenInput" type="range" min="0" max="40" step="1" value="'+w.oxygen+'"></div></div><div class="modal-note">현재 설정은 간단한 거주 가능성 모델에 반영됩니다. 실제 천체물리학이나 생물학 전체를 계산하는 모델은 아니며, 시민의 생존·환경 변화와 기술 발전에 영향을 주는 기초 규칙입니다.</div>',[{label:"취소",className:"secondary-btn",onClick:closeModal},{label:"법칙 적용",className:"primary-btn",onClick:()=>{const old=w.gravity+":"+w.temperature+":"+w.oxygen;w.gravity=Number($("gravityInput").value);w.temperature=Number($("tempInput").value);w.oxygen=Number($("oxygenInput").value);if(old!==w.gravity+":"+w.temperature+":"+w.oxygen){addEvent(w,"물리 조건 변경","중력 "+w.gravity.toFixed(1)+" m/s², 평균 기온 "+w.temperature+"°C, 산소 "+w.oxygen+"% 조건이 적용되었습니다. 생존 가능성과 환경 변화가 달라질 수 있습니다.","⚛","system");const c=w.citizens[0];if(c)addReaction(w,"unusual",c.name,c.trait,"물리 조건이 바뀌었어. 이 변화가 생존과 환경에 어떤 영향을 줄지 지켜보자.","물리 조건 변경");}closeModal();save();renderWorld();showToast("새로운 물리 조건을 적용했어요.");}}],"PHYSICS LAB");
+    showModal("물리법칙 설정",'<div class="physics-grid"><div class="physics-row"><label for="gravityInput">중력 강도</label><output id="gravityOut">'+w.gravity.toFixed(1)+' m/s²</output><input id="gravityInput" type="range" min="0.5" max="25" step="0.1" value="'+w.gravity+'"></div><div class="physics-row"><label for="tempInput">평균 기온</label><output id="tempOut">'+w.temperature+' °C</output><input id="tempInput" type="range" min="-80" max="80" step="1" value="'+w.temperature+'"></div><div class="physics-row"><label for="oxygenInput">대기 중 산소</label><output id="oxygenOut">'+w.oxygen+'%</output><input id="oxygenInput" type="range" min="0" max="40" step="1" value="'+w.oxygen+'"></div></div><div class="modal-note">현재 설정은 간단한 거주 가능성 모델에 반영됩니다. 실제 천체물리학이나 생물학 전체를 계산하는 모델은 아니며, 시민의 생존·환경 변화와 기술 발전에 영향을 주는 기초 규칙입니다.</div>',[{label:"취소",className:"secondary-btn",onClick:closeModal},{label:"법칙 적용",className:"primary-btn",onClick:()=>{const old=w.gravity+":"+w.temperature+":"+w.oxygen;w.gravity=Number($("gravityInput").value);w.temperature=Number($("tempInput").value);w.oxygen=Number($("oxygenInput").value);if(old!==w.gravity+":"+w.temperature+":"+w.oxygen){addEvent(w,"물리 조건 변경","중력 "+w.gravity.toFixed(1)+" m/s², 평균 기온 "+w.temperature+"°C, 산소 "+w.oxygen+"% 조건이 적용되었습니다. 생존 가능성과 환경 변화에 직접 영향을 줍니다.","⚛","system");const c=w.citizens[0];if(c)addReaction(w,"unusual",c.name,c.trait,"물리 조건이 바뀌었어. 이 환경에서 살아갈 수 있을지 걱정돼.","물리 조건 변경");updatePhysicsWarning(w,physicsRisk(w));}closeModal();save();renderWorld();showToast("새로운 물리 조건을 적용했어요.");}}],"PHYSICS LAB");
     const update=()=>{if(!$("gravityInput"))return;$("gravityOut").textContent=Number($("gravityInput").value).toFixed(1)+" m/s²";$("tempOut").textContent=$("tempInput").value+" °C";$("oxygenOut").textContent=$("oxygenInput").value+"%";};
     ["gravityInput","tempInput","oxygenInput"].forEach(id=>$(id)?.addEventListener("input",update));
   }
