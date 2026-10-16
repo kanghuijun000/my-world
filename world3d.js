@@ -21,7 +21,7 @@
       scene.add(new THREE.HemisphereLight(0xe8f5ff,0x65714d,2.05));
       const sun=new THREE.DirectionalLight(0xffedcf,2.8);sun.position.set(-35,55,25);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-75;sun.shadow.camera.right=75;sun.shadow.camera.top=75;sun.shadow.camera.bottom=-75;scene.add(sun);
       root=group(scene);raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
-      makeMinimap();buildWorld();resize();host.addEventListener("click",onClick);window.addEventListener("resize",resize);animate(0);return true;
+      makeMinimap();buildWorld();resize();host.parentElement.addEventListener("click",onClick);window.addEventListener("resize",resize);animate(0);return true;
     }catch(e){try{renderer?.dispose();renderer?.domElement.remove();}catch(_){}renderer=null;return false;}
   }
   function makeMinimap(){
@@ -89,7 +89,7 @@
     const pad=mesh(g,new THREE.CylinderGeometry(radius,radius,.16,28),mat(level>=2?"#8f9d72":"#9c9b78"),0,.06,0);pad.scale.z=.72;pad.castShadow=false;
     const roadmat=mat("#d8c8a6");
     const road=new THREE.Mesh(new THREE.TorusGeometry(radius*.72,.12,5,32),roadmat);road.rotation.x=Math.PI/2;road.position.y=.17;g.add(road);
-    if(level===0){for(let b=0;b<Math.min(5,3+index);b++){const a=b*Math.PI*2/5;house(Math.cos(a)*radius*.58,z+0,1,b);}}
+    if(level===0){for(let b=0;b<Math.min(5,3+index);b++){const a=b*Math.PI*2/5;house(x+Math.cos(a)*radius*.58,z+Math.sin(a)*radius*.48,1,b);}}
     else if(level===1){for(let b=0;b<10;b++){const a=b*Math.PI*2/10;house(x+Math.cos(a)*radius*.65,z+Math.sin(a)*radius*.55,.8,b);}}
     else{for(let b=0;b<18;b++){const a=b*Math.PI*2/18, bx=x+Math.cos(a)*(radius*.55+rand(b+index)*2),bz=z+Math.sin(a)*(radius*.48+rand(b+index+50)*2);tallBuilding(bx,bz,.75+rand(b+index+80)*.45,b);}}
     // A communal fire/market square anchors settlement life.
@@ -129,7 +129,7 @@
     for(let i=0;i<13;i++){const x=-42+rand(i+1500)*84,z=-38+rand(i+1600)*76;const rock=mesh(root,new THREE.DodecahedronGeometry(.5+rand(i+1700)*1.3),mat("#858e83"),x,heightAt(x,z)+.4,z);rock.scale.y=.6;}
     lookX=0;lookZ=0;updateCamera();drawMinimap();
   }
-  function updateCamera(){if(!camera)return;const distance=58/zoom;camera.position.set(lookX+distance*.12,lookZ+distance*.68,lookZ+distance*.78);camera.lookAt(lookX,0,lookZ);scene.fog.near=55/Math.sqrt(zoom);scene.fog.far=155/Math.sqrt(zoom);}
+  function updateCamera(){if(!camera)return;const distance=58/zoom;camera.position.set(lookX+distance*.12,distance*.68,lookZ+distance*.78);camera.lookAt(lookX,0,lookZ);scene.fog.near=55/Math.sqrt(zoom);scene.fog.far=155/Math.sqrt(zoom);}
   function setZoom(v){zoom=clamp(v,.55,4.8);updateCamera();drawMinimap();return zoom;}
   function pan(dx,dy){const scale=58/zoom/Math.max(250,host?.clientHeight||500);lookX=clamp(lookX-dx*scale,-WORLD*.48,WORLD*.48);lookZ=clamp(lookZ-dy*scale,-WORLD*.48,WORLD*.48);updateCamera();drawMinimap();}
   function setScale(){/* Intentionally no separate world/country/city modes: one continuous world. */}
@@ -138,7 +138,7 @@
   function onClick(e){if(!renderer||!people.length)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-(e.clientY-rect.top)/rect.height*2+1;raycaster.setFromCamera(mouse,camera);const hits=raycaster.intersectObjects(people.map(p=>p.group),true);if(!hits.length)return;let o=hits[0].object;while(o.parent&&!people.some(p=>p.group===o))o=o.parent;const found=people.find(p=>p.group===o);if(found?.citizen?.id)window.dispatchEvent(new CustomEvent("world3dcitizenclick",{detail:{id:found.citizen.id}}));}
   function drawMinimap(){
     if(!miniCtx)return;const ctx=miniCtx,w=mini.width,h=mini.height;ctx.clearRect(0,0,w,h);ctx.fillStyle="#203c3d";ctx.fillRect(0,0,w,h);
-    ctx.fillStyle="#6f9860";ctx.beginPath();ctx.ellipse(112,80,102,71,-.12,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#6f9860";ctx.beginPath();ctx.ellipse(112,80,102,71,-.12,0,Math.PI*2);ctx.fill();ctx.fillStyle="#557f49";ctx.beginPath();ctx.ellipse(65,78,43,57,-.5,0,Math.PI*2);ctx.fill();ctx.fillStyle="#d2c59c";ctx.beginPath();ctx.ellipse(112,43,45,19,-.1,0,Math.PI*2);ctx.fill();ctx.fillStyle="#9eb6bd";ctx.beginPath();ctx.ellipse(55,111,22,12,.3,0,Math.PI*2);ctx.fill();
     ctx.fillStyle="#c7b27b";ctx.beginPath();ctx.ellipse(194,106,37,28,.2,0,Math.PI*2);ctx.fill();
     ctx.fillStyle="#d6d7c4";ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(240,0);ctx.lineTo(240,20);ctx.lineTo(160,14);ctx.lineTo(80,25);ctx.lineTo(0,18);ctx.closePath();ctx.fill();
     ctx.strokeStyle="#58a8c4";ctx.lineWidth=3;ctx.beginPath();for(let i=0;i<20;i++){const x=86+Math.sin(i*.38)*25,z=i*8;if(i===0)ctx.moveTo(x,z);else ctx.lineTo(x,z);}ctx.stroke();
