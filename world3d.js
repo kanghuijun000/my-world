@@ -2,7 +2,7 @@
 (() => {
   "use strict";
   const WORLD=120, clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-  let host,renderer,scene,camera,root,people=[],settlements=[],mini,miniCtx,frame=0,clock=0,lastFrameTime=0,zoom=3.2,worldData=null,raycaster,mouse,lookX=0,lookZ=0,dragging=false,lastBuiltTech=-999;
+  let host,renderer,scene,camera,root,people=[],settlements=[],mini,miniCtx,frame=0,clock=0,lastFrameTime=0,zoom=3.2,worldData=null,raycaster,mouse,lookX=0,lookZ=0,dragging=false,lastBuiltTech=-999,lastSettlementSignature="";
   const mats={};
   function rand(n){const x=Math.sin(n*127.1+311.7)*43758.5453123;return x-Math.floor(x);}
   function mat(color,roughness=.9,metalness=0){const k=color+"|"+roughness+"|"+metalness;if(!mats[k])mats[k]=new THREE.MeshStandardMaterial({color,roughness,metalness});return mats[k];}
@@ -86,7 +86,7 @@
     const name=data?.name||(index===0?"첫 정착지":level>=2?"발전 도시 "+index:"정착지 "+(index+1));
     const g=group(root,x,heightAt(x,z),z);const radius=Number.isFinite(data?.radius)?data.radius:(level>=2?7:level===1?4.8:2.7);
     // Cleared land, roads and a central shared place.
-    const pad=mesh(g,new THREE.CylinderGeometry(radius,radius,.16,28),mat(level>=2?"#8f9d72":"#9c9b78"),0,.06,0);pad.scale.z=.72;pad.castShadow=false;
+    const nationIndex=Math.max(0,(worldData?.nations||[]).findIndex(n=>n.id===data?.nationId));const borderColors=["#d7c36f","#7db9c8","#c98779","#9e8bd1","#8bbd86","#d6a3d0"];const pad=mesh(g,new THREE.CylinderGeometry(radius,radius,.16,28),mat(level>=2?"#8f9d72":"#9c9b78"),0,.06,0);pad.scale.z=.72;pad.castShadow=false;const territory=mesh(g,new THREE.TorusGeometry(radius*.96,.12,5,48),mat(borderColors[nationIndex%borderColors.length]),0,.2,0);territory.rotation.x=Math.PI/2;
     const roadmat=mat("#d8c8a6");
     const road=new THREE.Mesh(new THREE.TorusGeometry(radius*.72,.12,5,32),roadmat);road.rotation.x=Math.PI/2;road.position.y=.17;g.add(road);
     const count=Math.max(3,Math.min(30,Math.round(radius*2.2)));
@@ -136,13 +136,14 @@
     // Natural landmarks remain spread over one continuous map; no zoom-level swapping.
     const lake=mesh(root,new THREE.CircleGeometry(7,40),mat("#4b9db4",.25),-27,heightAt(-27,17)+.1,17);lake.rotation.x=-Math.PI/2;lake.scale.set(1,.75,1);
     for(let i=0;i<13;i++){const x=-42+rand(i+1500)*84,z=-38+rand(i+1600)*76;const rock=mesh(root,new THREE.DodecahedronGeometry(.5+rand(i+1700)*1.3),mat("#858e83"),x,heightAt(x,z)+.4,z);rock.scale.y=.6;}
+    lastSettlementSignature=JSON.stringify((w.settlementData||[]).filter(a=>a.alive!==false).map(a=>[a.id,a.radius,a.level,a.population,a.nationId,a.name]));
     if(!Number.isFinite(lookX)||!Number.isFinite(lookZ)){lookX=0;lookZ=0;}updateCamera();drawMinimap();
   }
   function updateCamera(){if(!camera)return;const distance=42/zoom;camera.position.set(lookX+distance*.18,1.0+distance*.82,lookZ+distance*.58);camera.lookAt(lookX,1.8,lookZ);scene.fog.near=42/Math.sqrt(zoom);scene.fog.far=190/Math.sqrt(zoom);}
   function setZoom(v){zoom=clamp(v,.55,4.8);updateCamera();drawMinimap();return zoom;}
   function pan(dx,dy){const scale=34/zoom/Math.max(250,host?.clientHeight||500);lookX=clamp(lookX-dx*scale,-WORLD*.48,WORLD*.48);lookZ=clamp(lookZ-dy*scale,-WORLD*.48,WORLD*.48);updateCamera();drawMinimap();}
   function setScale(){/* Intentionally no separate world/country/city modes: one continuous world. */}
-  function setWorld(w){worldData=w;if(root){const n=(w&&Array.isArray(w.citizens))?w.citizens.length:12,dc=Array.isArray(w?.settlementData)?w.settlementData.filter(a=>a.alive!==false).length:0;const expected=clamp(n||12,12,60);if(people.length!==expected||lastBuiltTech!==(Number.isFinite(w.techIndex)?w.techIndex:-1)||settlements.length!==clamp(dc||Math.max(1,w.settlements||1,Math.floor(n/18)+1,(w.techIndex||0)>=3?2:1),1,8)){buildWorld();return;}people.forEach((p,i)=>{if(w.citizens[i])p.citizen=w.citizens[i];});drawMinimap();}}
+  function setWorld(w){worldData=w;if(root){const n=(w&&Array.isArray(w.citizens))?w.citizens.length:12,ds=Array.isArray(w?.settlementData)?w.settlementData.filter(a=>a.alive!==false):[],dc=ds.length,signature=JSON.stringify(ds.map(a=>[a.id,a.radius,a.level,a.population,a.nationId,a.name]));const expected=clamp(n||12,12,60);if(people.length!==expected||lastBuiltTech!==(Number.isFinite(w.techIndex)?w.techIndex:-1)||settlements.length!==clamp(dc||Math.max(1,w.settlements||1,Math.floor(n/18)+1,(w.techIndex||0)>=3?2:1),1,8)||signature!==lastSettlementSignature){buildWorld();return;}people.forEach((p,i)=>{if(w.citizens[i])p.citizen=w.citizens[i];});drawMinimap();}}
   function resize(){if(!renderer||!host||!camera)return;const r=host.getBoundingClientRect();if(r.width<1||r.height<1)return;renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.4));renderer.setSize(Math.round(r.width),Math.round(r.height),false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();updateCamera();}
   function onClick(e){if(!renderer)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-(e.clientY-rect.top)/rect.height*2+1;raycaster.setFromCamera(mouse,camera);const hits=raycaster.intersectObjects([...people.map(p=>p.group),...settlements.map(p=>p.group)],true);if(!hits.length)return;let o=hits[0].object;while(o.parent&&!people.some(p=>p.group===o)&&!settlements.some(p=>p.group===o))o=o.parent;const p=people.find(p=>p.group===o);if(p?.citizen?.id){window.dispatchEvent(new CustomEvent("world3dcitizenclick",{detail:{id:p.citizen.id}}));return;}const a=settlements.find(p=>p.group===o);if(a?.id)window.dispatchEvent(new CustomEvent("world3dsettlementclick",{detail:{id:a.id}}));}
   function focusCitizen(id){const p=people.find(x=>x.citizen&&x.citizen.id===id);if(!p)return;lookX=p.group.position.x;lookZ=p.group.position.z;zoom=Math.max(zoom,3.1);updateCamera();drawMinimap();}
