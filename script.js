@@ -162,6 +162,21 @@
     w.settlementData.forEach(a=>{a.environment=settlementEnvironment(w,a);a.level=Math.max(a.level||0,Math.max(0,w.techIndex));a.type=settlementType(w,a);a.radius=2.7+Math.min(12,Math.sqrt(a.population)*.72+(a.level>=5?2:0));});
     if(w.settlementData.length>=2&&w.nations.length===1&&w.techIndex>=2&&Math.random()<.08){const a=w.settlementData[w.settlementData.length-1],id="nation-"+uid(),n={id,name:nationNames[w.nations.length%nationNames.length],settlementIds:[a.id],atWarWith:[],alive:true};w.nations.push(n);a.nationId=id;syncSettlementPopulations(w);addEvent(w,"새로운 국가의 등장",n.name+"이 독립 세력으로 등장했습니다.","🏳️","milestone");}
   }
+  function setWeather(w,type){
+    if(!["clear","rain","storm","snow","drought"].includes(type))return false;w.weather=type;w.weatherUntilDay=type==="clear"?0:Math.floor(w.elapsedDays)+45;
+    if(type==="rain"){w.food=Math.min(100,w.food+8);w.environment=Math.min(100,w.environment+5);}if(type==="storm"){w.environment=Math.max(0,w.environment-8);w.resources=Math.max(0,w.resources-4);}if(type==="drought"){w.food=Math.max(0,w.food-18);w.environment=Math.max(0,w.environment-6);}
+    const names={clear:"맑은 날씨",rain:"강제 강우",storm:"폭풍우",snow:"폭설",drought:"가뭄"};addEvent(w,names[type],type==="rain"?"강제로 비가 내리기 시작해 토양 수분과 식량 생산에 영향을 줍니다.":type==="storm"?"폭풍우가 환경과 시설에 피해를 줄 수 있습니다.":type==="snow"?"폭설로 이동과 식량 확보가 어려워졌습니다.":type==="drought"?"가뭄으로 식량과 자연 환경이 악화됩니다.":"특수 기상 현상이 종료되었습니다.",type==="rain"?"🌧️":type==="storm"?"⛈️":type==="snow"?"❄️":type==="drought"?"☀️":"🌤️","nature");return true;
+  }
+  function startEpidemic(w,severity=2){
+    const name=pick(["붉은 열병","회색 기침병","계절성 감염병","미지의 전염병"]);w.epidemic={name,active:true,severity:Math.max(1,Math.min(3,Number(severity)||2)),startedDay:Math.floor(w.elapsedDays)};const limit=Math.max(1,Math.ceil(w.citizens.length*.12));let count=0;
+    for(const c of w.citizens){if(count>=limit)break;if(Math.random()<.8){c.infected=true;c.infectedDays=0;count++;}}w.epidemic.infectedCount=count;addEvent(w,"전염병 발생: "+name,name+"이 확산되기 시작했습니다. 감염·회복이 진행되며 인구에 영향을 줍니다.","🦠","nature");return true;
+  }
+  function simulateEpidemic(w,speed){
+    if(!w.epidemic?.active)return;const infected=w.citizens.filter(c=>c.infected),healthy=w.citizens.filter(c=>!c.infected),spread=Math.min(.7,.06*w.epidemic.severity*speed),newly=[];healthy.forEach(c=>{if(Math.random()<spread*infected.length/Math.max(1,w.citizens.length))newly.push(c);});newly.forEach(c=>{c.infected=true;c.infectedDays=0;});
+    const gone=new Set();w.citizens.forEach(c=>{if(c.infected){c.infectedDays=(c.infectedDays||0)+speed;if(Math.random()<Math.min(.8,.004*w.epidemic.severity*speed))gone.add(c.id);else if(c.infectedDays>14+Math.random()*12){c.infected=false;c.infectedDays=0;}}});
+    if(gone.size){w.citizens=w.citizens.filter(c=>!gone.has(c.id));addEvent(w,"전염병으로 인한 사망",gone.size+"명의 시민이 "+w.epidemic.name+"으로 사망했습니다.","🕯️","nature");}
+    const left=w.citizens.filter(c=>c.infected).length;w.epidemic.infectedCount=left;if(!left||Math.floor(w.elapsedDays)-w.epidemic.startedDay>180){w.citizens.forEach(c=>{c.infected=false;c.infectedDays=0;});w.epidemic.active=false;addEvent(w,"전염병 종식",w.epidemic.name+"의 확산이 잦아들었습니다.","🩺","milestone");}syncSettlementPopulations(w);
+  }
   function settlementCurrentStatus(w,a){
     const nation=w.nations.find(n=>n.id===a.nationId);
     const population=Number(a.population||0);
@@ -255,6 +270,10 @@
       const c=w.citizens.pop();w.population=w.citizens.length;addEvent(w,"식량 부족","먹을거리가 부족해지며 공동체의 인구가 줄었습니다. 식량 생산이나 인구 규모를 살펴볼 필요가 있습니다.","🥀","nature");if(c)addReaction(w,"negative",c.name,c.trait,"먹을거리가 부족해지고 있어. 공동체가 식량을 확보해야 해.","식량 부족");
     }
     const oldDay=Math.floor(w.elapsedDays-speed),newDay=Math.floor(w.elapsedDays);
+    if(w.weather!=="clear"&&w.weatherUntilDay>0&&newDay>=w.weatherUntilDay)setWeather(w,"clear");
+    if(w.weather==="rain"){w.food=Math.min(100,w.food+.035*speed);w.environment=Math.min(100,w.environment+.025*speed);}if(w.weather==="drought"){w.food=Math.max(0,w.food-.05*speed);w.environment=Math.max(0,w.environment-.025*speed);}
+    if(w.weather==="storm"&&Math.random()<.008*speed)w.resources=Math.max(0,w.resources-1);
+    simulateEpidemic(w,speed);
     if(newDay>0&&Math.floor(newDay/365)>Math.floor(Math.max(0,oldDay)/365))simulateDemography(w,Math.floor(newDay/365)-Math.floor(Math.max(0,oldDay)/365));
     syncSettlementPopulations(w);
     if(w.food<20&&Math.floor(newDay/30)>Math.floor(Math.max(0,oldDay)/30)){w.food=Math.min(100,w.food+5);addEvent(w,"식량 확보 활동","주민들이 주변에서 먹을거리를 찾아 식량을 조금 확보했습니다.","🫐","system");}
@@ -408,6 +427,9 @@
   function applyAIAction(w,data){
     if(!data||typeof data!=="object"||typeof data.action!=="string")return false;
     const action=data.action;
+    if(action==="set_weather"){if(!setWeather(w,String(data.weather||"").toLowerCase())){showToast("날씨는 clear/rain/storm/snow/drought 중에서 선택해 주세요.");return true;}save();renderWorld();showToast("AI 명령 적용: 날씨를 변경했어요.");return true;}
+    if(action==="outbreak"||action==="start_epidemic"){startEpidemic(w,data.severity||2);save();renderWorld();showToast("AI 명령 적용: 전염병이 발생했어요.");return true;}
+    if(action==="end_epidemic"){if(w.epidemic)w.epidemic.active=false;w.citizens.forEach(c=>{c.infected=false;c.infectedDays=0;});addEvent(w,"전염병 치료","치료 조치로 전염병 확산을 강제로 중단했습니다.","🩺","milestone");save();renderWorld();showToast("AI 명령 적용: 전염병을 종식했어요.");return true;}
     if(action==="add_citizens"){
       const count=Math.floor(Number(data.count));
       if(!Number.isFinite(count)||count<1||count>100){showToast("시민 추가는 한 번에 1~100명까지 가능해요.");return true;}
@@ -465,7 +487,10 @@
       '5) set_speed: {"action":"set_speed","speed":1~100}. 시간 배속 변경.',
       '6) set_physics: {"action":"set_physics", optional gravity:0.5~25, temperature:-80~80, oxygen:0~40}. 명시된 물리 조건 변경. 단위는 중력 m/s², 기온 °C, 산소 %.',
       '7) adjust_world: {"action":"adjust_world","variable":"food"|"resources"|"environment","operation":"increase"|"decrease"|"set","amount":1~100}. 식량/자원/환경 수치를 조정. 현재 수치는 0~100.',
-      "요청이 지원 목록과 맞지 않거나 단순 질문이면 action:null. 사용자가 지정하지 않은 큰 변화량을 추측하지 말고, 수치가 없는 증감 요청은 적당한 작은 변화량 10을 사용한다. 파괴적/위험한 요청은 거절한다.",
+      '8) set_weather: {"action":"set_weather","weather":"clear"|"rain"|"storm"|"snow"|"drought"}. 비·폭풍·눈·가뭄·맑은 날씨를 적용한다.',
+      '9) outbreak: {"action":"outbreak","severity":1|2|3}. 가상의 전염병 이벤트를 시작한다.',
+      '10) end_epidemic: {"action":"end_epidemic"}. 전염병을 종료한다.',
+      "지원 목록 밖의 요청은 action:null로 반환한다.",
       "현재 세계 상태: 이름="+w.name+", 인구="+w.population+", 정착지="+w.settlements+", 연구="+Math.round(w.research)+", 기술="+techLabel(w)+", 배속="+w.speed+", 식량="+Math.round(w.food)+"/100, 자원="+Math.round(w.resources)+"/100, 환경="+Math.round(w.environment)+"/100, 중력="+w.gravity+"m/s², 기온="+w.temperature+"°C, 산소="+w.oxygen+"%.",
       "사용자 명령: "+userText
     ].join(String.fromCharCode(10));
