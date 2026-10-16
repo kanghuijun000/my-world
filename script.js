@@ -64,6 +64,7 @@
     const w={id:uid(),name:name.trim(),createdAt:Date.now(),elapsedDays:0,paused:false,speed:1,population:12,settlements:1,settlementData:[],nations:[],techIndex:-1,research:0,environment:100,food:100,resources:100,gravity:9.8,temperature:15,oxygen:21,events:[],reactions:[],citizens:[],achievements:[],filter:"all",manualResearch:0};
     w.settlementData=[makeSettlementRecord(0,-1)];w.nations=[{id:"nation-0",name:nationNames[0],settlementIds:[w.settlementData[0].id],atWarWith:[],alive:true}];
     for(let i=0;i<w.population;i++)w.citizens.push(newCitizen());
+    syncSettlementPopulations(w);
     addEvent(w,"세계의 탄생","새로운 세계가 모습을 드러냈습니다. 아직 모든 것이 시작 단계입니다.","🌍","system");
     addReaction(w,"positive","하린","호기심 많은","여긴 어떤 곳일까? 우리만의 이야기가 시작되겠지!","세계의 탄생");
     unlockAchievements(w);
@@ -80,7 +81,8 @@
     w.research=Number(w.research)||0;w.environment=Math.max(0,Math.min(100,Number(w.environment??100)));w.food=Math.max(0,Number(w.food??100));w.resources=Math.max(0,Number(w.resources??100));
     w.gravity=Number(w.gravity??9.8);w.temperature=Number(w.temperature??15);w.oxygen=Number(w.oxygen??21);
     w.events=Array.isArray(w.events)?w.events:[];w.reactions=Array.isArray(w.reactions)?w.reactions:[];w.citizens=Array.isArray(w.citizens)?w.citizens:[];w.achievements=Array.isArray(w.achievements)?w.achievements:[];ensureSettlements(w);
-    w.paused=!!w.paused;w.manualResearch=Number(w.manualResearch)||0;
+    w.weather=["clear","rain","storm","snow","drought"].includes(w.weather)?w.weather:"clear";w.weatherUntilDay=Number(w.weatherUntilDay)||0;w.wars=Array.isArray(w.wars)?w.wars:[];w.epidemic=w.epidemic&&typeof w.epidemic==="object"?w.epidemic:null;
+    w.paused=!!w.paused;w.manualResearch=Number(w.manualResearch)||0;syncSettlementPopulations(w);
     return w;
   }
   function save(){
@@ -144,6 +146,30 @@
   function updateSettlements(w){ensureSettlements(w);w.settlementData.forEach(a=>{a.environment=settlementEnvironment(w,a);a.level=Math.max(a.level||0,Math.max(0,w.techIndex));a.population=w.population<=0?0:Math.max(0,Math.round(a.population*.96+Math.max(1,Math.floor(w.population/w.settlementData.length))*.04+(w.food>25?1:0)-(w.food<12?2:0)));a.type=settlementType(w,a);a.radius=Math.max(2.7,Math.min(15,2.7+Math.sqrt(a.population)*.72+(a.level>=5?2:0)));});
     const ss=w.settlementData;for(let i=0;i<ss.length;i++)for(let j=i+1;j<ss.length;j++){const a=ss[i],b=ss[j];if(a.nationId===b.nationId)continue;const n=w.nations.find(n=>n.id===a.nationId),m=w.nations.find(n=>n.id===b.nationId);if(!n||!m)continue;const war=n.atWarWith.includes(m.id);if(!war&&Math.hypot(a.x-b.x,a.z-b.z)<34&&Math.random()<.025){n.atWarWith.push(m.id);m.atWarWith.push(n.id);addEvent(w,"국경 분쟁 발발",a.name+"과 "+b.name+" 사이에 영역 분쟁이 시작됐습니다.","⚔️","milestone");}else if(war&&Math.random()<.1){const loser=Math.random()<.5?a:b,winner=loser===a?b:a;loser.population=Math.floor(loser.population*.6);if(loser.population<=2){w.settlementData=w.settlementData.filter(x=>x.id!==loser.id);w.settlements=w.settlementData.length;addEvent(w,"정착지의 몰락",loser.name+"이 전쟁으로 사라졌습니다. "+winner.name+"의 영향력이 커졌습니다.","🏚️","milestone");}else addEvent(w,"전쟁으로 인한 인구 감소",loser.name+"의 인구와 영역이 줄었습니다.","⚔️","milestone");n.atWarWith=n.atWarWith.filter(id=>id!==m.id);m.atWarWith=m.atWarWith.filter(id=>id!==n.id);}}
     if(ss.length>=2&&w.nations.length===1&&w.techIndex>=2&&Math.random()<.12){const a=ss[ss.length-1],id="nation-"+uid(),n={id,name:nationNames[w.nations.length%nationNames.length],settlementIds:[a.id],atWarWith:[],alive:true};w.nations.push(n);w.nations[0].settlementIds=w.nations[0].settlementIds.filter(x=>x!==a.id);a.nationId=id;addEvent(w,"새로운 국가의 등장",n.name+"이 독립 세력으로 등장했습니다.","🏳️","milestone");}}
+  function syncSettlementPopulations(w){
+    if(!w.settlementData?.length)return;
+    const valid=new Set(w.settlementData.map(a=>a.id));let next=0;
+    w.citizens.forEach(c=>{if(!c.homeSettlementId||!valid.has(c.homeSettlementId)){c.homeSettlementId=w.settlementData[next%w.settlementData.length].id;next++;}});
+    const counts=new Map(w.settlementData.map(a=>[a.id,0]));w.citizens.forEach(c=>counts.set(c.homeSettlementId,(counts.get(c.homeSettlementId)||0)+1));
+    w.settlementData.forEach(a=>{a.population=counts.get(a.id)||0;});w.population=w.citizens.length;
+    w.nations.forEach(n=>{n.settlementIds=w.settlementData.filter(a=>a.nationId===n.id).map(a=>a.id);});
+  }
+  function assignCitizen(w,c){const a=w.settlementData.slice().sort((x,y)=>x.population-y.population)[0];c.homeSettlementId=a?.id||w.settlementData[0]?.id||null;w.citizens.push(c);}
+  function simulateDemography(w,years){
+    let births=0,deaths=0;const span=Math.max(1,Math.min(100,Math.floor(years)||1));
+    for(let y=0;y<span;y++){
+      const gone=new Set();
+      w.citizens.forEach(c=>{c.age=Math.max(0,Number(c.age)||0)+1;const p=c.age>=105?0.32:c.age>=95?0.20:c.age>=85?0.10:c.age>=75?0.045:0.004;if(Math.random()<p)gone.add(c.id);});
+      if(gone.size){w.citizens=w.citizens.filter(c=>!gone.has(c.id));deaths+=gone.size;}
+      if(w.citizens.length&&w.food>12&&w.environment>15&&w.citizens.length<1000){
+        const count=Math.min(8,Math.floor(w.citizens.length*.018)+(Math.random()<.22?1:0));
+        for(let i=0;i<count&&w.citizens.length<1000;i++){const c=newCitizen("random");c.age=0;c.memory=["이 세계에서 태어났습니다."];assignCitizen(w,c);births++;}
+      }
+    }
+    syncSettlementPopulations(w);
+    if(births)addEvent(w,"새로운 세대의 탄생",births+"명의 아이가 태어났습니다. 각 마을의 거주 인구에 반영됩니다.","👶","people");
+    if(deaths)addEvent(w,"자연사",deaths+"명의 시민이 나이와 생애주기에 따라 자연사했습니다.","🕯️","people");
+  }
   function settlementCurrentStatus(w,a){
     const nation=w.nations.find(n=>n.id===a.nationId);
     const population=Number(a.population||0);
@@ -236,8 +262,9 @@
     if(w.food<15&&pop>0&&Math.random()<Math.min(.35,.018*speed)){
       const c=w.citizens.pop();w.population=w.citizens.length;addEvent(w,"식량 부족","먹을거리가 부족해지며 공동체의 인구가 줄었습니다. 식량 생산이나 인구 규모를 살펴볼 필요가 있습니다.","🥀","nature");if(c)addReaction(w,"negative",c.name,c.trait,"먹을거리가 부족해지고 있어. 공동체가 식량을 확보해야 해.","식량 부족");
     }
-    const oldDay=Math.floor(w.elapsedDays-speed);
-    const newDay=Math.floor(w.elapsedDays);
+    const oldDay=Math.floor(w.elapsedDays-speed),newDay=Math.floor(w.elapsedDays);
+    if(newDay>0&&Math.floor(newDay/365)>Math.floor(Math.max(0,oldDay)/365))simulateDemography(w,Math.floor(newDay/365)-Math.floor(Math.max(0,oldDay)/365));
+    syncSettlementPopulations(w);
     if(w.food<20&&Math.floor(newDay/30)>Math.floor(Math.max(0,oldDay)/30)){w.food=Math.min(100,w.food+5);addEvent(w,"식량 확보 활동","주민들이 주변에서 먹을거리를 찾아 식량을 조금 확보했습니다.","🫐","system");}
     const researchGain=pop>0?(0.025+pop*0.0018+(w.manualResearch?0.035:0))*Math.max(0,1-riskInfo.riskPerDay*2)*speed:0;
     w.research+=researchGain;
