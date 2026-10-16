@@ -177,6 +177,34 @@
     if(gone.size){w.citizens=w.citizens.filter(c=>!gone.has(c.id));addEvent(w,"전염병으로 인한 사망",gone.size+"명의 시민이 "+w.epidemic.name+"으로 사망했습니다.","🕯️","nature");}
     const left=w.citizens.filter(c=>c.infected).length;w.epidemic.infectedCount=left;if(!left||Math.floor(w.elapsedDays)-w.epidemic.startedDay>180){w.citizens.forEach(c=>{c.infected=false;c.infectedDays=0;});w.epidemic.active=false;addEvent(w,"전염병 종식",w.epidemic.name+"의 확산이 잦아들었습니다.","🩺","milestone");}syncSettlementPopulations(w);
   }
+  function findNation(w,id){return w.nations.find(n=>n.id===id)||null;}
+  function ensureTwoNations(w){
+    if(w.settlementData.length<2){if(w.citizens.length<2){showToast("전쟁을 시작하려면 시민이 최소 2명 필요해요.");return null;}createSettlementInWorld(w,false);}
+    let a=w.nations[0],b=w.nations.find(n=>n.id!==a?.id);
+    if(!b){const settlement=w.settlementData[w.settlementData.length-1],id="nation-"+uid();b={id,name:nationNames[w.nations.length%nationNames.length],settlementIds:[],atWarWith:[],alive:true};w.nations.push(b);settlement.nationId=id;syncSettlementPopulations(w);}
+    return a&&b?[a,b]:null;
+  }
+  function forceWar(w,attackerId,defenderId){
+    const pair=ensureTwoNations(w);if(!pair)return false;const a=findNation(w,attackerId)||pair[0],b=findNation(w,defenderId)||pair.find(n=>n.id!==a.id)||pair[1];if(!a||!b||a.id===b.id)return false;
+    if(!a.atWarWith.includes(b.id))a.atWarWith.push(b.id);if(!b.atWarWith.includes(a.id))b.atWarWith.push(a.id);w.wars=Array.isArray(w.wars)?w.wars:[];
+    if(!w.wars.some(x=>x.active&&((x.attackerId===a.id&&x.defenderId===b.id)||(x.attackerId===b.id&&x.defenderId===a.id))))w.wars.push({id:uid(),attackerId:a.id,defenderId:b.id,lastAttackDay:Math.floor(w.elapsedDays)-10,active:true});
+    addEvent(w,"전쟁 선포",a.name+"이 "+b.name+"에 전쟁을 선포했습니다. 양측 병력이 이동하기 시작합니다.","⚔️","milestone");syncSettlementPopulations(w);return true;
+  }
+  function endWar(w){
+    let count=0;(w.wars||[]).forEach(wr=>{if(!wr.active)return;wr.active=false;count++;const a=findNation(w,wr.attackerId),b=findNation(w,wr.defenderId);if(a)a.atWarWith=a.atWarWith.filter(id=>id!==wr.defenderId);if(b)b.atWarWith=b.atWarWith.filter(id=>id!==wr.attackerId);});
+    if(count)addEvent(w,"휴전 협정","진행 중인 전쟁이 종료되고 군사 행동이 멈췄습니다.","🕊️","milestone");
+  }
+  function simulateWar(w,speed){
+    const day=Math.floor(w.elapsedDays);for(const wr of (w.wars||[])){if(!wr.active||day-Number(wr.lastAttackDay||0)<Math.max(3,30/speed))continue;wr.lastAttackDay=day;const a=findNation(w,wr.attackerId),b=findNation(w,wr.defenderId);if(!a||!b)continue;
+      const as=w.settlementData.filter(x=>x.nationId===a.id),bs=w.settlementData.filter(x=>x.nationId===b.id);if(!as.length||!bs.length){wr.active=false;continue;}
+      const advanced=w.techIndex>=6,source=as[0],target=bs[0],side=Math.random()<.5?as:bs,victims=w.citizens.filter(c=>side.some(x=>x.id===c.homeSettlementId)),loss=Math.min(victims.length,Math.max(1,Math.floor(w.citizens.length*.015))),gone=new Set();
+      for(let i=0;i<loss&&victims.length;i++){const ix=Math.floor(Math.random()*victims.length);gone.add(victims[ix].id);victims.splice(ix,1);}if(gone.size)w.citizens=w.citizens.filter(c=>!gone.has(c.id));
+      wr.visualAction={type:advanced?"projectile":"soldiers",from:{x:source.x,z:source.z},to:{x:target.x,z:target.z},at:Date.now()};addEvent(w,advanced?"장거리 공격":"무장 병력의 진격",advanced?a.name+"의 장거리 공격이 "+b.name+"의 거점으로 향했습니다.":a.name+"의 무장 병력이 "+b.name+" 영토로 진격했습니다.",advanced?"🚀":"🪖","milestone");
+      if(Math.random()<.12){target.nationId=a.id;addEvent(w,"영토 점령",a.name+"이 "+target.name+"을 점령했습니다.","🏳️","milestone");}
+      if(Math.random()<.1||w.citizens.length<2){wr.active=false;a.atWarWith=a.atWarWith.filter(id=>id!==b.id);b.atWarWith=b.atWarWith.filter(id=>id!==a.id);addEvent(w,"전쟁 종결",a.name+"과 "+b.name+" 사이의 전쟁이 종료되었습니다.","🕊️","milestone");}
+      syncSettlementPopulations(w);
+    }
+  }
   function settlementCurrentStatus(w,a){
     const nation=w.nations.find(n=>n.id===a.nationId);
     const population=Number(a.population||0);
@@ -430,6 +458,8 @@
     if(action==="set_weather"){if(!setWeather(w,String(data.weather||"").toLowerCase())){showToast("날씨는 clear/rain/storm/snow/drought 중에서 선택해 주세요.");return true;}save();renderWorld();showToast("AI 명령 적용: 날씨를 변경했어요.");return true;}
     if(action==="outbreak"||action==="start_epidemic"){startEpidemic(w,data.severity||2);save();renderWorld();showToast("AI 명령 적용: 전염병이 발생했어요.");return true;}
     if(action==="end_epidemic"){if(w.epidemic)w.epidemic.active=false;w.citizens.forEach(c=>{c.infected=false;c.infectedDays=0;});addEvent(w,"전염병 치료","치료 조치로 전염병 확산을 강제로 중단했습니다.","🩺","milestone");save();renderWorld();showToast("AI 명령 적용: 전염병을 종식했어요.");return true;}
+    if(action==="force_war"||action==="start_war"){const ok=forceWar(w,data.attackerId,data.defenderId);if(ok){save();renderWorld();showToast("AI 명령 적용: 국가 간 전쟁을 시작했어요.");}return true;}
+    if(action==="end_war"||action==="peace"){endWar(w);save();renderWorld();showToast("AI 명령 적용: 휴전 협정을 맺었어요.");return true;}
     if(action==="add_citizens"){
       const count=Math.floor(Number(data.count));
       if(!Number.isFinite(count)||count<1||count>100){showToast("시민 추가는 한 번에 1~100명까지 가능해요.");return true;}
@@ -490,6 +520,8 @@
       '8) set_weather: {"action":"set_weather","weather":"clear"|"rain"|"storm"|"snow"|"drought"}. 비·폭풍·눈·가뭄·맑은 날씨를 적용한다.',
       '9) outbreak: {"action":"outbreak","severity":1|2|3}. 가상의 전염병 이벤트를 시작한다.',
       '10) end_epidemic: {"action":"end_epidemic"}. 전염병을 종료한다.',
+      '11) force_war: {"action":"force_war"}. 필요하면 정착지를 분리해 두 국가를 만들고 전쟁을 시작한다.',
+      '12) end_war: {"action":"end_war"}. 진행 중인 전쟁을 끝내고 휴전한다.',
       "지원 목록 밖의 요청은 action:null로 반환한다.",
       "현재 세계 상태: 이름="+w.name+", 인구="+w.population+", 정착지="+w.settlements+", 연구="+Math.round(w.research)+", 기술="+techLabel(w)+", 배속="+w.speed+", 식량="+Math.round(w.food)+"/100, 자원="+Math.round(w.resources)+"/100, 환경="+Math.round(w.environment)+"/100, 중력="+w.gravity+"m/s², 기온="+w.temperature+"°C, 산소="+w.oxygen+"%.",
       "사용자 명령: "+userText
