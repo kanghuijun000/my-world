@@ -2,7 +2,7 @@
 (() => {
   "use strict";
   const WORLD=120, clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-  let host,renderer,scene,camera,root,people=[],settlements=[],mini,miniCtx,frame=0,clock=0,zoom=1.7,worldData=null,raycaster,mouse,lookX=0,lookZ=0,dragging=false,lastBuiltTech=-999;
+  let host,renderer,scene,camera,root,people=[],settlements=[],mini,miniCtx,frame=0,clock=0,zoom=3.2,worldData=null,raycaster,mouse,lookX=0,lookZ=0,dragging=false,lastBuiltTech=-999;
   const mats={};
   function rand(n){const x=Math.sin(n*127.1+311.7)*43758.5453123;return x-Math.floor(x);}
   function mat(color,roughness=.9,metalness=0){const k=color+"|"+roughness+"|"+metalness;if(!mats[k])mats[k]=new THREE.MeshStandardMaterial({color,roughness,metalness});return mats[k];}
@@ -129,9 +129,9 @@
     for(let i=0;i<13;i++){const x=-42+rand(i+1500)*84,z=-38+rand(i+1600)*76;const rock=mesh(root,new THREE.DodecahedronGeometry(.5+rand(i+1700)*1.3),mat("#858e83"),x,heightAt(x,z)+.4,z);rock.scale.y=.6;}
     if(!Number.isFinite(lookX)||!Number.isFinite(lookZ)){lookX=0;lookZ=0;}updateCamera();drawMinimap();
   }
-  function updateCamera(){if(!camera)return;const distance=48/zoom;camera.position.set(lookX+distance*.18,1.15+distance*.56,lookZ+distance*.83);camera.lookAt(lookX,1.05,lookZ);scene.fog.near=42/Math.sqrt(zoom);scene.fog.far=145/Math.sqrt(zoom);}
+  function updateCamera(){if(!camera)return;const distance=34/zoom;camera.position.set(lookX+distance*.16,1.4+distance*.48,lookZ+distance*.72);camera.lookAt(lookX,1.0,lookZ);scene.fog.near=28/Math.sqrt(zoom);scene.fog.far=125/Math.sqrt(zoom);}
   function setZoom(v){zoom=clamp(v,.55,4.8);updateCamera();drawMinimap();return zoom;}
-  function pan(dx,dy){const scale=58/zoom/Math.max(250,host?.clientHeight||500);lookX=clamp(lookX-dx*scale,-WORLD*.48,WORLD*.48);lookZ=clamp(lookZ-dy*scale,-WORLD*.48,WORLD*.48);updateCamera();drawMinimap();}
+  function pan(dx,dy){const scale=34/zoom/Math.max(250,host?.clientHeight||500);lookX=clamp(lookX-dx*scale,-WORLD*.48,WORLD*.48);lookZ=clamp(lookZ-dy*scale,-WORLD*.48,WORLD*.48);updateCamera();drawMinimap();}
   function setScale(){/* Intentionally no separate world/country/city modes: one continuous world. */}
   function setWorld(w){worldData=w;if(root){const n=(w&&Array.isArray(w.citizens))?w.citizens.length:12;const expected=clamp(n||12,12,60);if(people.length!==expected||lastBuiltTech!==(Number.isFinite(w.techIndex)?w.techIndex:-1)||settlements.length!==clamp(Math.max(1,w.settlements||1,Math.floor(n/18)+1,(w.techIndex||0)>=3?2:1),1,8)){buildWorld();return;}people.forEach((p,i)=>{if(w.citizens[i])p.citizen=w.citizens[i];});drawMinimap();}}
   function resize(){if(!renderer||!host)return;const r=host.getBoundingClientRect();if(r.width<1||r.height<1)return;renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();}
@@ -144,7 +144,7 @@
     ctx.fillStyle="#d6d7c4";ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(240,0);ctx.lineTo(240,20);ctx.lineTo(160,14);ctx.lineTo(80,25);ctx.lineTo(0,18);ctx.closePath();ctx.fill();
     ctx.strokeStyle="#58a8c4";ctx.lineWidth=3;ctx.beginPath();for(let i=0;i<20;i++){const x=86+Math.sin(i*.38)*25,z=i*8;if(i===0)ctx.moveTo(x,z);else ctx.lineTo(x,z);}ctx.stroke();
     settlements.forEach((s,i)=>{const x=(s.x+WORLD/2)/WORLD*w,y=(s.z+WORLD/2)/WORLD*h;ctx.fillStyle=s.level>=2?"#ffcf75":s.level===1?"#e6e7b5":"#ffffff";ctx.beginPath();ctx.arc(x,y,s.level>=2?4.5:3.2,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#23302b";ctx.lineWidth=1;ctx.stroke();});
-    const size=clamp(58/zoom/WORLD*w,14,95),cx=(lookX+WORLD/2)/WORLD*w,cy=(lookZ+WORLD/2)/WORLD*h;ctx.strokeStyle="#f4fbff";ctx.lineWidth=1.5;ctx.strokeRect(clamp(cx-size/2,0,w-size),clamp(cy-size/2,0,h-size),size,size);
+    const size=clamp(34/zoom/WORLD*w,14,95),cx=(lookX+WORLD/2)/WORLD*w,cy=(lookZ+WORLD/2)/WORLD*h;ctx.strokeStyle="#f4fbff";ctx.lineWidth=1.5;ctx.strokeRect(clamp(cx-size/2,0,w-size),clamp(cy-size/2,0,h-size),size,size);
     const label=host.querySelector("#worldMiniCount");if(label)label.textContent="정착지 "+settlements.length;
   }
   function socialStep(p,dt){
