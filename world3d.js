@@ -2,7 +2,7 @@
 (() => {
   "use strict";
   const WORLD=120, clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-  let host,renderer,scene,camera,root,people=[],settlements=[],mini,miniCtx,frame=0,clock=0,zoom=1,worldData=null,raycaster,mouse,lookX=0,lookZ=0,dragging=false;
+  let host,renderer,scene,camera,root,people=[],settlements=[],mini,miniCtx,frame=0,clock=0,zoom=1,worldData=null,raycaster,mouse,lookX=0,lookZ=0,dragging=false,lastBuiltTech=-999;
   const mats={};
   function rand(n){const x=Math.sin(n*127.1+311.7)*43758.5453123;return x-Math.floor(x);}
   function mat(color,roughness=.9,metalness=0){const k=color+"|"+roughness+"|"+metalness;if(!mats[k])mats[k]=new THREE.MeshStandardMaterial({color,roughness,metalness});return mats[k];}
@@ -114,7 +114,7 @@
   }
   function buildWorld(){
     clearWorld();makeTerrain();
-    const w=worldData||{},pop=Array.isArray(w.citizens)?w.citizens.length:12,tech=Math.max(0,w.techIndex||0);
+    const w=worldData||{},pop=Array.isArray(w.citizens)?w.citizens.length:12,tech=Math.max(0,w.techIndex||0);lastBuiltTech=Number.isFinite(w.techIndex)?w.techIndex:-1;
     const settlementCount=clamp(Math.max(1,w.settlements||1,Math.floor(pop/18)+1,tech>=3?2:1),1,8);
     for(let i=0;i<settlementCount;i++)settlements.push(createSettlement(i,settlementCount,tech));
     const citizens=Array.isArray(w.citizens)?w.citizens:[];
@@ -133,7 +133,7 @@
   function setZoom(v){zoom=clamp(v,.55,4.8);updateCamera();drawMinimap();return zoom;}
   function pan(dx,dy){const scale=58/zoom/Math.max(250,host?.clientHeight||500);lookX=clamp(lookX-dx*scale,-WORLD*.48,WORLD*.48);lookZ=clamp(lookZ-dy*scale,-WORLD*.48,WORLD*.48);updateCamera();drawMinimap();}
   function setScale(){/* Intentionally no separate world/country/city modes: one continuous world. */}
-  function setWorld(w){worldData=w;if(root){const n=(w&&Array.isArray(w.citizens))?w.citizens.length:12;const expected=clamp(n||12,12,60);if(people.length!==expected||settlements.length!==clamp(Math.max(1,w.settlements||1,Math.floor(n/18)+1,(w.techIndex||0)>=3?2:1),1,8)){buildWorld();return;}people.forEach((p,i)=>{if(w.citizens[i])p.citizen=w.citizens[i];});drawMinimap();}}
+  function setWorld(w){worldData=w;if(root){const n=(w&&Array.isArray(w.citizens))?w.citizens.length:12;const expected=clamp(n||12,12,60);if(people.length!==expected||lastBuiltTech!==(Number.isFinite(w.techIndex)?w.techIndex:-1)||settlements.length!==clamp(Math.max(1,w.settlements||1,Math.floor(n/18)+1,(w.techIndex||0)>=3?2:1),1,8)){buildWorld();return;}people.forEach((p,i)=>{if(w.citizens[i])p.citizen=w.citizens[i];});drawMinimap();}}
   function resize(){if(!renderer||!host)return;const r=host.getBoundingClientRect();if(r.width<1||r.height<1)return;renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();}
   function onClick(e){if(!renderer||!people.length)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-(e.clientY-rect.top)/rect.height*2+1;raycaster.setFromCamera(mouse,camera);const hits=raycaster.intersectObjects(people.map(p=>p.group),true);if(!hits.length)return;let o=hits[0].object;while(o.parent&&!people.some(p=>p.group===o))o=o.parent;const found=people.find(p=>p.group===o);if(found?.citizen?.id)window.dispatchEvent(new CustomEvent("world3dcitizenclick",{detail:{id:found.citizen.id}}));}
   function drawMinimap(){
