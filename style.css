@@ -325,3 +325,28 @@ body.world-active #worldView .map-scene .geography{pointer-events:none}
 .world-minimap-foot i{display:inline-block;width:6px;height:6px;border-radius:50%;margin-left:3px}
 .world-minimap-foot .mini-village{background:#e6e7b5}
 .world-minimap-foot .mini-city{background:#ffcf75}
+
+
+/* v12: uncluttered full-screen world view */
+body.world-active #worldView .map-overlay-head,
+body.world-active #worldView .map-toolbar,
+body.world-active #worldView .map-caption,
+body.world-active #worldView .map-scale-note,
+body.world-active #worldView .map-coordinates,
+body.world-active #worldView .map-label,
+body.world-active #worldView #worldMenuBtn,
+body.world-active #worldView .world-menu{display:none!important}
+body.world-active #worldView .world-heading{top:8px;left:8px;right:auto;bottom:auto;margin:0;gap:7px}
+body.world-active #worldView .world-heading .back-link{padding:7px 9px;font-size:10px;background:#0b1728a8;border-color:#ffffff20}
+body.world-active #worldView .world-title-wrap{gap:6px}
+body.world-active #worldView .world-icon{display:none}
+body.world-active #worldView .world-heading h1{font-size:12px;opacity:.9}
+body.world-active #worldView .world-map{touch-action:none;overscroll-behavior:contain}
+body.world-active #worldView .world3d-host,
+body.world-active #worldView .world3d-canvas{touch-action:none}
+body.world-active #worldView .world-minimap{top:8px;right:8px}
+@media(max-width:600px){
+ body.world-active #worldView .world-heading{top:7px;left:7px}
+ body.world-active #worldView .world-heading .back-link{padding:6px 8px}
+ body.world-active #worldView .world-heading h1{font-size:11px}
+}
