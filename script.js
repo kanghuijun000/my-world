@@ -2,7 +2,7 @@
   "use strict";
   const STORAGE_KEY = "my-world-data-v1";
   const $ = (id) => document.getElementById(id);
-  const levelNames = {world:"행성 전체",continent:"대륙",country:"국가",city:"도시",village:"마을"};
+  const levelNames = {world:"연속 세계"};
   const techStages = [
     {name:"불의 활용",label:"불의 시대",need:5,icon:"🔥",desc:"불을 다루는 법을 익혔습니다."},
     {name:"농경의 시작",label:"신석기 시대",need:20,icon:"🌾",desc:"식량을 재배하며 정착 생활이 시작됩니다."},
@@ -190,7 +190,7 @@
     $("achievementList").innerHTML=achievementDefs.map(a=>{const got=w.achievements.includes(a.id);return '<div class="achievement-item '+(got?"":"locked")+'"><div class="achievement-badge">'+(got?a.icon:"🔒")+'</div><div><strong>'+esc(a.name)+'</strong><small>'+esc(got?"달성 완료":a.desc)+'</small></div></div>';}).join("");
     $("citizenList").innerHTML=w.citizens.slice(0,12).map(c=>'<div class="citizen-card" data-citizen="'+esc(c.id)+'" role="button" tabindex="0"><div class="avatar">'+esc(c.icon||"🧑")+'</div><div><strong>'+esc(c.name)+'</strong><small>'+esc(c.job)+" · "+esc(c.trait)+'</small></div></div>').join("")+(w.citizens.length>12?'<div class="empty-inline">외 '+(w.citizens.length-12)+'명의 시민이 더 있습니다.</div>':"");
     $("mapCaption").textContent=({"world":"대륙의 전체 배치","continent":"대륙 내부의 국가 경계","country":"지역과 강의 흐름","city":"도시 구역과 도로망","village":"마을의 길과 개별 건물"})[activeScale]+(w.settlements>1?" · 정착지 "+w.settlements+"곳":"");
-    $("mapHeading").textContent=w.techIndex>=3?"문명의 세계":"푸른 행성";$("worldMap").classList.remove("scale-world","scale-continent","scale-country","scale-city","scale-village");$("worldMap").classList.add("scale-"+activeScale);$("mapScaleBadge").textContent=levelNames[activeScale];$("worldMap").querySelector(".town-b").classList.toggle("hidden",w.settlements<2);
+    $("mapHeading").textContent=w.techIndex>=5?"성장하는 문명":w.techIndex>=1?"살아가는 땅":"새로운 야생 세계";$("mapScaleBadge").textContent="연속 세계";$("worldMap").querySelector(".town-b").classList.toggle("hidden",w.settlements<2);
     save();
   }
   function renderMapCitizens(w){
@@ -370,7 +370,7 @@
     const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
     const midpoint=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
     const point=e=>({x:e.clientX,y:e.clientY});
-    const applyZoom=value=>{zoom=clamp(value,.8,5);if(has3d)window.World3D.setZoom(zoom);else{const scene=$("mapScene");if(scene)scene.style.transform="translate3d(0,0,0) scale("+zoom+")";}};
+    const applyZoom=value=>{zoom=clamp(value,.55,4.8);if(has3d)window.World3D.setZoom(zoom);else{const scene=$("mapScene");if(scene)scene.style.transform="translate3d(0,0,0) scale("+zoom+")";}};
     map.style.touchAction="none";
     map.addEventListener("pointerdown",e=>{
       if(e.target.closest("button,.map-toolbar,.map-overlay-head,.map-caption,.tool-toggle"))return;
@@ -417,9 +417,8 @@
     $("addPeopleBtn").addEventListener("click",addPeopleModal);$("physicsBtn").addEventListener("click",physicsModal);
     $("commandForm").addEventListener("submit",e=>{e.preventDefault();const input=$("commandInput");executeCommand(input.value);input.value="";});
     $("reactionFilters").addEventListener("click",e=>{const b=e.target.closest("[data-filter]");if(!b)return;activeFilter=b.dataset.filter;$("reactionFilters").querySelectorAll("button").forEach(x=>x.classList.toggle("active",x===b));renderWorld();});
-    document.querySelectorAll("[data-scale]").forEach(b=>b.addEventListener("click",()=>setScale(b.dataset.scale)));
-    $("zoomInBtn").addEventListener("click",()=>{const keys=Object.keys(levelNames);setScale(keys[Math.min(keys.length-1,keys.indexOf(activeScale)+1)]);});
-    $("zoomOutBtn").addEventListener("click",()=>{const keys=Object.keys(levelNames);setScale(keys[Math.max(0,keys.indexOf(activeScale)-1)]);});
+    $("zoomInBtn").addEventListener("click",()=>{if(window.World3D)window.World3D.setZoom(window.World3D.getZoom()*1.22);});
+    $("zoomOutBtn").addEventListener("click",()=>{if(window.World3D)window.World3D.setZoom(window.World3D.getZoom()/1.22);});
     $("citizenRefreshBtn").addEventListener("click",()=>{renderWorld();showToast("시민 목록을 새로고침했어요.");});
     $("citizenList").addEventListener("click",e=>{const c=e.target.closest("[data-citizen]");if(c)showCitizen(c.dataset.citizen);});
     $("citizenList").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-citizen]")){e.preventDefault();showCitizen(e.target.dataset.citizen);}});
