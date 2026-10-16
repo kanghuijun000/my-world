@@ -351,10 +351,9 @@
   function closeModal(){$("modalBackdrop").classList.add("hidden");}
   function createWorldModal(){
     if(worlds.length>=10){showToast("세계는 최대 10개까지 만들 수 있어요.");return;}
-    showModal("새로운 세계 만들기",'<div class="form-field"><label for="newWorldName">세계 이름 *</label><input id="newWorldName" class="form-input" maxlength="32" placeholder="예: 푸른 별, 두 번째 지구" required><small>같은 이름의 세계도 만들 수 있습니다. 각 세계의 데이터는 서로 독립적으로 저장됩니다.</small></div><div class="form-field"><label for="worldPreset">세계 유형</label><select id="worldPreset" class="form-select"><option value="normal">일반 세계 · 현실과 비슷한 물리법칙</option><option value="lowGravity">저중력 세계 · 중력 약화</option><option value="cold">빙하 세계 · 낮은 평균 기온</option><option value="thinAir">희박한 대기 · 산소 감소</option></select></div><div class="modal-note">기본 세계는 불, 농경, 금속 가공, 문자, 과학, 산업, 전기 순으로 발전할 수 있습니다. 발전 속도는 시민 수와 연구 진행에 따라 달라집니다.</div>',[{label:"취소",className:"secondary-btn",onClick:closeModal},{label:"세계 탄생시키기",className:"primary-btn",onClick:()=>{
+    showModal("새로운 세계 만들기",'<div class="form-field"><label for="newWorldName">세계 이름 *</label><input id="newWorldName" class="form-input" maxlength="32" placeholder="예: 푸른 별, 두 번째 지구" required><small>같은 이름의 세계도 만들 수 있습니다. 각 세계의 데이터는 서로 독립적으로 저장됩니다.</small></div><div class="modal-note">새 세계는 모두 평범한 물리 조건(중력 9.8 m/s², 평균 기온 15°C, 산소 21%)으로 시작합니다. 세계를 만든 뒤 물리법칙 메뉴에서 조건을 바꿀 수 있습니다.</div>',[{label:"취소",className:"secondary-btn",onClick:closeModal},{label:"세계 탄생시키기",className:"primary-btn",onClick:()=>{
       const input=$("newWorldName");const name=input.value.trim();if(!name){input.focus();input.style.borderColor="var(--red)";return;}
-      const w=makeWorld(name);const preset=$("worldPreset").value;if(preset==="lowGravity")w.gravity=3.2;if(preset==="cold")w.temperature=-12;if(preset==="thinAir")w.oxygen=8;
-      if(preset!=="normal"){const condition=({lowGravity:"낮은 중력",cold:"낮은 평균 기온",thinAir:"희박한 산소 농도"}[preset]);addEvent(w,"특이한 물리 조건","이 세계는 "+condition+"에서 시작합니다. 생존과 기술 발전은 이 조건의 영향을 받습니다.","⚛","system");const c=w.citizens[0];if(c)addReaction(w,"unusual",c.name,c.trait,"이 세계의 조건은 익숙한 기준과 달라. 어떤 변화가 생길지 지켜보자!","특이한 물리 조건");}
+      const w=makeWorld(name);
       worlds.push(w);save();closeModal();renderHome();openWorld(w.id);showToast("✦ "+name+" 세계가 탄생했습니다.");
     }}],"CREATE WORLD");
     setTimeout(()=>$("newWorldName")?.focus(),50);
@@ -362,19 +361,21 @@
   function confirmAction(title,message,label,action,danger=false){
     showModal(title,'<p style="font-size:12px;line-height:1.8;color:#b8c6db;margin:0">'+esc(message)+'</p>',[{label:"취소",className:"secondary-btn",onClick:closeModal},{label,className:danger?"danger-btn":"primary-btn",onClick:()=>{closeModal();action();}}]);
   }
-  function renameWorld(){
-    const w=activeWorld();if(!w)return;
-    showModal("세계 이름 바꾸기",'<div class="form-field"><label for="renameInput">새 이름</label><input id="renameInput" class="form-input" maxlength="32" value="'+esc(w.name)+'"></div>',[{label:"취소",className:"secondary-btn",onClick:closeModal},{label:"저장",className:"primary-btn",onClick:()=>{const name=$("renameInput").value.trim();if(!name){$("renameInput").focus();return;}w.name=name;closeModal();render();showToast("세계 이름을 변경했어요.");}}]);
+  function renameWorld(worldId=activeId){
+    const w=worlds.find(x=>x.id===worldId);if(!w)return;
+    showModal("세계 이름 수정하기",'<div class="form-field"><label for="renameInput">새 이름</label><input id="renameInput" class="form-input" maxlength="32" value="'+esc(w.name)+'"></div>',[{label:"취소",className:"secondary-btn",onClick:closeModal},{label:"저장",className:"primary-btn",onClick:()=>{const name=$("renameInput").value.trim();if(!name){$("renameInput").focus();return;}w.name=name;closeModal();save();if(activeId===w.id)render();else renderHome();showToast("세계 이름을 변경했어요.");}}]);
   }
   function cloneWorld(){
     const w=activeWorld();if(!w)return;if(worlds.length>=10){showToast("세계는 최대 10개까지 만들 수 있어요.");return;}
     showModal("세계 복제하기",'<div class="form-field"><label for="cloneInput">복제할 세계의 이름</label><input id="cloneInput" class="form-input" maxlength="32" value="'+esc(w.name+"의 복제")+'"></div><div class="modal-note">현재 세계의 시민, 기술, 물리법칙, 사건과 도전과제 기록을 복사합니다. 복제본은 독립적으로 진행됩니다.</div>',[{label:"취소",className:"secondary-btn",onClick:closeModal},{label:"복제",className:"primary-btn",onClick:()=>{const name=$("cloneInput").value.trim();if(!name){$("cloneInput").focus();return;}const copy=JSON.parse(JSON.stringify(w));copy.id=uid();copy.name=name;copy.createdAt=Date.now();copy.paused=false;copy.events.unshift({id:uid(),title:"세계 복제",description:"다른 세계의 현재 상태를 바탕으로 독립된 세계가 만들어졌습니다.",icon:"▣",category:"system",day:Math.floor(copy.elapsedDays)+1,year:worldYearNumber(copy)});worlds.push(copy);save();closeModal();renderHome();openWorld(copy.id);showToast("세계가 독립적으로 복제됐어요.");}}]);
   }
-  function resetWorld(){
-    const w=activeWorld();if(!w)return;confirmAction("세계를 초기화할까요?","이 세계의 시민, 기술, 사건, 도전과제와 물리 조건이 처음 상태로 돌아갑니다. 다른 세계에는 영향이 없습니다.","초기화",()=>{const fresh=makeWorld(w.name);fresh.id=w.id;fresh.createdAt=w.createdAt;worlds=worlds.map(x=>x.id===w.id?fresh:x);render();showToast("이 세계를 처음 상태로 되돌렸어요.");},true);
+  function resetWorld(worldId=activeId){
+    const w=worlds.find(x=>x.id===worldId);if(!w)return;
+    confirmAction("세계를 초기화할까요?",'"'+w.name+'" 세계의 시민, 기술, 사건, 도전과제와 물리 조건이 처음 상태로 돌아갑니다. 세계 이름과 다른 세계의 데이터는 유지됩니다.',"초기화",()=>{const fresh=makeWorld(w.name);fresh.id=w.id;fresh.createdAt=w.createdAt;worlds=worlds.map(x=>x.id===w.id?fresh:x);save();if(activeId===w.id){selectedSettlementId=null;render();}else renderHome();showToast("이 세계를 처음 상태로 되돌렸어요.");},true);
   }
-  function deleteWorld(){
-    const w=activeWorld();if(!w)return;confirmAction("세계를 삭제할까요?",'"'+w.name+'" 세계와 그 안의 모든 시민 및 기록이 이 기기의 저장 데이터에서 삭제됩니다. 다른 세계에는 영향이 없습니다.',"삭제",()=>{worlds=worlds.filter(x=>x.id!==w.id);save();goHome();showToast("세계가 삭제됐어요.");},true);
+  function deleteWorld(worldId=activeId){
+    const w=worlds.find(x=>x.id===worldId);if(!w)return;
+    confirmAction("세계를 삭제할까요?",'"'+w.name+'" 세계와 그 안의 모든 시민 및 기록이 이 기기의 저장 데이터에서 삭제됩니다. 다른 세계에는 영향이 없습니다.',"삭제",()=>{worlds=worlds.filter(x=>x.id!==w.id);save();if(activeId===w.id)goHome();else renderHome();showToast("세계가 삭제됐어요.");},true);
   }
   function addPeopleModal(){
     showModal("시민 추가",'<div class="form-field"><label for="peopleCount">추가할 시민 수</label><input id="peopleCount" class="form-input" type="number" min="1" max="100" value="10"></div><div class="form-field"><label for="peopleType">시민 유형</label><select id="peopleType" class="form-select"><option value="random">무작위 주민</option><option value="농부">농부</option><option value="연구자">연구자</option><option value="건축가">건축가</option><option value="치유사">치유사</option><option value="탐험가">탐험가</option><option value="custom">특성 다양한 시민</option></select></div><div class="form-field"><label for="spawnMode">등장 방식</label><select id="spawnMode" class="form-select"><option value="natural">공동체에 자연스럽게 합류</option><option value="specific">특정 장소에 모여 등장</option></select><small>장소 선택 지도는 후속 버전에서 연결할 예정입니다. 특정 장소 옵션은 현재 정착지에 합류하는 방식으로 처리됩니다.</small></div>',[{label:"취소",className:"secondary-btn",onClick:closeModal},{label:"시민 추가",className:"primary-btn",onClick:()=>{const n=Number($("peopleCount").value);if(!Number.isFinite(n)||n<1||n>100){$("peopleCount").focus();return;}const w=activeWorld();closeModal();if(w){addPeople(w,n,$("peopleType")?.value||"random");showToast(n+"명의 시민이 세계에 합류했어요.");}}}]);
@@ -520,7 +521,7 @@
       catch(error){console.warn("PWA installation prompt failed:",error);}
     });
     $("createWorldBtn").addEventListener("click",createWorldModal);$("emptyCreateBtn").addEventListener("click",createWorldModal);
-    $("worldList").addEventListener("click",e=>{const menu=e.target.closest("[data-card-menu]");if(menu){e.stopPropagation();const w=worlds.find(x=>x.id===menu.dataset.cardMenu);if(w){showModal(w.name,'<p style="font-size:12px;color:#b8c6db">이 세계를 열거나 이름을 바꾸고, 복제 또는 삭제할 수 있습니다.</p>',[{label:"닫기",className:"secondary-btn",onClick:closeModal},{label:"열기",className:"primary-btn",onClick:()=>{closeModal();openWorld(w.id);}}]);}return;}const card=e.target.closest("[data-open-world]");if(card)openWorld(card.dataset.openWorld);});
+    $("worldList").addEventListener("click",e=>{const menu=e.target.closest("[data-card-menu]");if(menu){e.stopPropagation();const w=worlds.find(x=>x.id===menu.dataset.cardMenu);if(w){showModal(w.name,'<p style="font-size:12px;color:#b8c6db">이 세계에서 실행할 작업을 선택하세요. 초기화와 삭제는 이 세계에만 적용됩니다.</p>',[{label:"닫기",className:"secondary-btn",onClick:closeModal},{label:"열기",className:"primary-btn",onClick:()=>{closeModal();openWorld(w.id);}},{label:"이름 수정하기",className:"secondary-btn",onClick:()=>renameWorld(w.id)},{label:"초기화",className:"secondary-btn",onClick:()=>resetWorld(w.id)},{label:"삭제",className:"danger-btn",onClick:()=>deleteWorld(w.id)}]);}return;}const card=e.target.closest("[data-open-world]");if(card)openWorld(card.dataset.openWorld);});
     $("worldList").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-open-world]")){e.preventDefault();openWorld(e.target.dataset.openWorld);}});
     $("backHomeBtn").addEventListener("click",goHome);$("toolToggleBtn").addEventListener("click",()=>{const open=!document.body.classList.contains("tools-open");document.body.classList.toggle("tools-open",open);$("toolToggleBtn").setAttribute("aria-expanded",String(open));$("toolToggleBtn").querySelector(".tool-toggle-label").textContent=open?"도구 닫기":"도구 열기";});$("worldMenuBtn").addEventListener("click",()=>$("worldMenu").classList.toggle("hidden"));
     $("renameWorldBtn").addEventListener("click",()=>{$("worldMenu").classList.add("hidden");renameWorld();});
