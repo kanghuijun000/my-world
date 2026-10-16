@@ -2,7 +2,7 @@
 (() => {
   "use strict";
   const WORLD=120, clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-  let host,renderer,scene,camera,root,people=[],settlements=[],mini,miniCtx,frame=0,clock=0,zoom=1,worldData=null,raycaster,mouse,lookX=0,lookZ=0,dragging=false,lastBuiltTech=-999;
+  let host,renderer,scene,camera,root,people=[],settlements=[],mini,miniCtx,frame=0,clock=0,zoom=1.7,worldData=null,raycaster,mouse,lookX=0,lookZ=0,dragging=false,lastBuiltTech=-999;
   const mats={};
   function rand(n){const x=Math.sin(n*127.1+311.7)*43758.5453123;return x-Math.floor(x);}
   function mat(color,roughness=.9,metalness=0){const k=color+"|"+roughness+"|"+metalness;if(!mats[k])mats[k]=new THREE.MeshStandardMaterial({color,roughness,metalness});return mats[k];}
@@ -28,7 +28,7 @@
     const box=document.createElement("div");box.className="world-minimap";
     box.innerHTML='<div class="world-minimap-head"><span>WORLD MAP</span><b id="worldMiniCount">정착지 0</b></div><canvas width="240" height="160" aria-label="세계 미니맵"></canvas><div class="world-minimap-foot"><span><i class="mini-village"></i> 정착지 <i class="mini-city"></i> 도시</span><span>터치 이동</span></div>';
     host.appendChild(box);mini=box.querySelector("canvas");miniCtx=mini.getContext("2d");
-    mini.addEventListener("pointerdown",e=>{e.stopPropagation();const r=mini.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*WORLD-WORLD/2;const z=(e.clientY-r.top)/r.height*WORLD-WORLD/2;lookX=clamp(x,-WORLD/2,WORLD/2);lookZ=clamp(z,-WORLD/2,WORLD/2);updateCamera();drawMinimap();});
+    mini.addEventListener("pointerdown",e=>{e.stopPropagation();const r=mini.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*WORLD-WORLD/2;const z=(e.clientY-r.top)/r.height*WORLD-WORLD/2;lookX=clamp(x,-WORLD/2,WORLD/2);lookZ=clamp(z,-WORLD/2,WORLD/2);zoom=Math.max(zoom,2.15);updateCamera();drawMinimap();});
   }
   function clearWorld(){while(root.children.length){const o=root.children[0];root.remove(o);o.traverse?.(n=>{n.geometry?.dispose?.();if(n.material&&!Object.values(mats).includes(n.material)){if(Array.isArray(n.material))n.material.forEach(m=>m.dispose());else n.material.dispose();}});}people=[];settlements=[];}
   function heightAt(x,z){return Math.sin(x*.075)*1.6+Math.cos(z*.08)*1.4+Math.sin((x+z)*.04)*2+Math.max(0,Math.sin(x*.035+1)*Math.cos(z*.045))*4;}
@@ -127,15 +127,16 @@
     // Natural landmarks remain spread over one continuous map; no zoom-level swapping.
     const lake=mesh(root,new THREE.CircleGeometry(7,40),mat("#4b9db4",.25),-27,heightAt(-27,17)+.1,17);lake.rotation.x=-Math.PI/2;lake.scale.set(1,.75,1);
     for(let i=0;i<13;i++){const x=-42+rand(i+1500)*84,z=-38+rand(i+1600)*76;const rock=mesh(root,new THREE.DodecahedronGeometry(.5+rand(i+1700)*1.3),mat("#858e83"),x,heightAt(x,z)+.4,z);rock.scale.y=.6;}
-    lookX=0;lookZ=0;updateCamera();drawMinimap();
+    if(!Number.isFinite(lookX)||!Number.isFinite(lookZ)){lookX=0;lookZ=0;}updateCamera();drawMinimap();
   }
-  function updateCamera(){if(!camera)return;const distance=58/zoom;camera.position.set(lookX+distance*.12,distance*.68,lookZ+distance*.78);camera.lookAt(lookX,0,lookZ);scene.fog.near=55/Math.sqrt(zoom);scene.fog.far=155/Math.sqrt(zoom);}
+  function updateCamera(){if(!camera)return;const distance=48/zoom;camera.position.set(lookX+distance*.18,1.15+distance*.56,lookZ+distance*.83);camera.lookAt(lookX,1.05,lookZ);scene.fog.near=42/Math.sqrt(zoom);scene.fog.far=145/Math.sqrt(zoom);}
   function setZoom(v){zoom=clamp(v,.55,4.8);updateCamera();drawMinimap();return zoom;}
   function pan(dx,dy){const scale=58/zoom/Math.max(250,host?.clientHeight||500);lookX=clamp(lookX-dx*scale,-WORLD*.48,WORLD*.48);lookZ=clamp(lookZ-dy*scale,-WORLD*.48,WORLD*.48);updateCamera();drawMinimap();}
   function setScale(){/* Intentionally no separate world/country/city modes: one continuous world. */}
   function setWorld(w){worldData=w;if(root){const n=(w&&Array.isArray(w.citizens))?w.citizens.length:12;const expected=clamp(n||12,12,60);if(people.length!==expected||lastBuiltTech!==(Number.isFinite(w.techIndex)?w.techIndex:-1)||settlements.length!==clamp(Math.max(1,w.settlements||1,Math.floor(n/18)+1,(w.techIndex||0)>=3?2:1),1,8)){buildWorld();return;}people.forEach((p,i)=>{if(w.citizens[i])p.citizen=w.citizens[i];});drawMinimap();}}
   function resize(){if(!renderer||!host)return;const r=host.getBoundingClientRect();if(r.width<1||r.height<1)return;renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();}
   function onClick(e){if(!renderer||!people.length)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-(e.clientY-rect.top)/rect.height*2+1;raycaster.setFromCamera(mouse,camera);const hits=raycaster.intersectObjects(people.map(p=>p.group),true);if(!hits.length)return;let o=hits[0].object;while(o.parent&&!people.some(p=>p.group===o))o=o.parent;const found=people.find(p=>p.group===o);if(found?.citizen?.id)window.dispatchEvent(new CustomEvent("world3dcitizenclick",{detail:{id:found.citizen.id}}));}
+  function focusCitizen(id){const p=people.find(x=>x.citizen&&x.citizen.id===id);if(!p)return;lookX=p.group.position.x;lookZ=p.group.position.z;zoom=Math.max(zoom,3.1);updateCamera();drawMinimap();}
   function drawMinimap(){
     if(!miniCtx)return;const ctx=miniCtx,w=mini.width,h=mini.height;ctx.clearRect(0,0,w,h);ctx.fillStyle="#203c3d";ctx.fillRect(0,0,w,h);
     ctx.fillStyle="#6f9860";ctx.beginPath();ctx.ellipse(112,80,102,71,-.12,0,Math.PI*2);ctx.fill();ctx.fillStyle="#557f49";ctx.beginPath();ctx.ellipse(65,78,43,57,-.5,0,Math.PI*2);ctx.fill();ctx.fillStyle="#d2c59c";ctx.beginPath();ctx.ellipse(112,43,45,19,-.1,0,Math.PI*2);ctx.fill();ctx.fillStyle="#9eb6bd";ctx.beginPath();ctx.ellipse(55,111,22,12,.3,0,Math.PI*2);ctx.fill();
@@ -162,5 +163,5 @@
     if(p.chat>0){p.chat-=dt;if(p.nearby){p.group.lookAt(p.nearby.group.position.x,p.group.position.y+1,p.nearby.group.position.z);}}
   }
   function animate(t){requestAnimationFrame(animate);const dt=Math.min(.04,Math.max(0,(t-clock.lastT||0)/1000));clock.lastT=t;clock+=dt;if(!renderer||!scene)return;people.forEach(p=>socialStep(p,dt));renderer.render(scene,camera);}
-  window.World3D={init,setScale,setZoom,getZoom:()=>zoom,setWorld,pan,resize};
+  window.World3D={init,setScale,setZoom,getZoom:()=>zoom,setWorld,pan,resize,focusCitizen};
 })();
