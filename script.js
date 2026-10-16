@@ -147,8 +147,11 @@
   function settlementCurrentStatus(w,a){
     const nation=w.nations.find(n=>n.id===a.nationId);
     const population=Number(a.population||0);
-    if(population<=2||w.environment<=10||w.food<=5)return "멸망 위기";
+    const physics=physicsRisk(w);
+    if(population<=2||w.environment<=10||w.food<=5||physics.level>=3)return "멸망 위기";
     if(nation?.atWarWith?.length)return "전쟁 중";
+    if(physics.level===2)return "위험 상태";
+    if(physics.level===1)return "환경 악화";
     if(w.food<20||w.resources<15||population<5)return "빈곤";
     return "일상";
   }
