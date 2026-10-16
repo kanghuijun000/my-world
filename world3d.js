@@ -3,7 +3,7 @@
   "use strict";
   const SCALE = {world:0,continent:1,country:2,city:3,village:4};
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-  let host,renderer,scene,camera,root,terrain,people=[],buildings=[],trees=[],frame=0,raf=0,scaleName="world",zoom=1,worldData=null,raycaster,mouse;
+  let host,renderer,scene,camera,root,terrain,people=[],buildings=[],trees=[],frame=0,raf=0,scaleName="world",zoom=1,worldData=null,raycaster,mouse,baseCameraPosition=null,baseLookY=0;
   const clock={last:0};
   function seeded(n){let x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x);}
   function mat(color,roughness=.88,metalness=0){return new THREE.MeshStandardMaterial({color,roughness,metalness});}
@@ -108,7 +108,7 @@
       blobs.forEach((b,i)=>{const m=addMesh(globe,new THREE.SphereGeometry(1,20,14),i%2?land2:landMat,b[0],b[1],b[2]);m.scale.set(b[2]*1.5,b[3]*1.2,.13);m.rotation.z=(i-2)*.17;});
       const clouds=mat("#e7f4f4",.9);for(let i=0;i<6;i++){const cloud=addMesh(globe,new THREE.SphereGeometry(.42+seeded(i)*.35,12,8),clouds,-3+i*1.1,9+seeded(i+5)*1.8,.4);cloud.scale.set(1.5,.35,.5);cloud.castShadow=false;}
       globe.rotation.x=-.12;globe.rotation.y=.22;
-      camera.position.set(0,10,23);camera.lookAt(0,6.5,0);
+      camera.position.set(0,10,23);baseCameraPosition=camera.position.clone();baseLookY=6.5;camera.lookAt(0,baseLookY,0);
       for(let i=0;i<18;i++)tree((seeded(i+4)-.5)*size*.8,(seeded(i+18)-.5)*size*.8,.65+seeded(i+24)*.7);
     }else{
       // Broad-scale landscapes include mountain ridges, rivers and forest belts.
@@ -150,7 +150,7 @@
         if(Math.abs(x)<.8)x+=x<0?-1:1;if(Math.abs(z)<.8)z+=z<0?-1:1;
         person(citizens[i]||{name:"시민 "+(i+1),job:"주민",id:"citizen-"+i},i,x,z,scaleName==="city"?.65:scaleName==="village"?.9:.6);
       }
-      camera.position.set(0,scaleName==="city"?15:scaleName==="village"?10:17,scaleName==="city"?17:scaleName==="village"?12:23);camera.lookAt(0,0,0);
+      camera.position.set(0,scaleName==="city"?15:scaleName==="village"?10:17,scaleName==="city"?17:scaleName==="village"?12:23);baseCameraPosition=camera.position.clone();baseLookY=0;camera.lookAt(0,baseLookY,0);
     }
     if(scaleName==="world"){
       const citizens=(worldData&&Array.isArray(worldData.citizens))?worldData.citizens:[];
@@ -158,11 +158,11 @@
     }
     updateCamera();
   }
-  function updateCamera(){if(!camera||!root)return;const s=1/zoom;camera.position.multiplyScalar(s);camera.lookAt(0,scaleName==="world"?5.5:0,0);}
+  function updateCamera(){if(!camera||!baseCameraPosition)return;const s=1/zoom;camera.position.set(baseCameraPosition.x*s,baseCameraPosition.y*s,baseCameraPosition.z*s);camera.lookAt(0,baseLookY,0);}
   function setScale(name){if(!(name in SCALE))return;scaleName=name;zoom=1;if(root){clearRoot();terrainScene();}document.querySelectorAll("[data-scale]").forEach(b=>b.classList.toggle("active",b.dataset.scale===name));}
   function setZoom(value){zoom=clamp(value,.8,5);updateCamera();return zoom;}
   function getZoom(){return zoom;}
-  function setWorld(w){worldData=w;if(root){clearRoot();terrainScene();}}
+  function setWorld(w){worldData=w;if(root){const list=(w&&Array.isArray(w.citizens))?w.citizens:[];people.forEach((p,i)=>{if(list[i])p.citizen=list[i];});}}
   function resize(){if(!renderer||!host)return;const r=host.getBoundingClientRect();if(r.width<1||r.height<1)return;renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();}
   function onClick(e){if(!renderer||!people.length)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=((e.clientX-rect.left)/rect.width)*2-1;mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(mouse,camera);const hits=raycaster.intersectObjects(people.map(p=>p.group),true);if(hits.length){let o=hits[0].object;while(o.parent&& !people.some(p=>p.group===o))o=o.parent;const found=people.find(p=>p.group===o);if(found&&found.citizen&&found.citizen.id){const ev=new CustomEvent("world3dcitizenclick",{detail:{id:found.citizen.id}});window.dispatchEvent(ev);}}}
   function animate(t){raf=requestAnimationFrame(animate);if(!renderer||!scene)return;const dt=Math.min(.05,(t-clock.last)/1000||0);clock.last=t;frame+=dt;people.forEach(p=>{const a=frame*p.speed+p.phase;p.legL.rotation.x=Math.sin(a)*.5;p.legR.rotation.x=-Math.sin(a)*.5;p.armL.rotation.x=-Math.sin(a)*.35;p.armR.rotation.x=Math.sin(a)*.35;p.group.position.x=p.origin.x+Math.sin(a*.25)*p.radius;p.group.position.z=p.origin.z+Math.cos(a*.2)*p.radius*.6;});renderer.render(scene,camera);}
