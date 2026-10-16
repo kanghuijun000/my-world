@@ -23,7 +23,7 @@
       scene.add(new THREE.HemisphereLight(0xeaf6ff,0x536447,2.0));
       const sun=new THREE.DirectionalLight(0xfff0d7,3.0);sun.position.set(-8,15,9);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-22;sun.shadow.camera.right=22;sun.shadow.camera.top=22;sun.shadow.camera.bottom=-22;scene.add(sun);
       root=new THREE.Group();scene.add(root);raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
-      renderer.domElement.addEventListener("click",onClick);
+      host.addEventListener("click",onClick);
       window.addEventListener("resize",resize);
       setScale("world");resize();animate(0);return true;
     }catch(e){if(renderer){renderer.dispose();renderer.domElement.remove();}renderer=null;return false;}
