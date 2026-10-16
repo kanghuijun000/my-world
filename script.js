@@ -148,6 +148,15 @@
     const donor=w.settlementData.filter(x=>x.id!==a.id).sort((x,y)=>y.population-x.population)[0];if(donor){let moved=0;for(const c of w.citizens){if(c.homeSettlementId===donor.id&&moved<Math.max(1,Math.floor(w.citizens.length*.12))&&donor.population>1){c.homeSettlementId=a.id;moved++;}}}
     syncSettlementPopulations(w);return a;
   }
+  function addCitizenToSettlement(w,c){const a=w.settlementData.slice().sort((x,y)=>x.population-y.population)[0];c.homeSettlementId=a?.id||w.settlementData[0]?.id||null;w.citizens.push(c);}
+  function simulateDemography(w,years){
+    let births=0,deaths=0;const span=Math.max(1,Math.min(100,Math.floor(years)||1));
+    for(let y=0;y<span;y++){const gone=new Set();w.citizens.forEach(c=>{c.age=Math.max(0,Number(c.age)||0)+1;const p=c.age>=105?0.32:c.age>=95?0.20:c.age>=85?0.10:c.age>=75?0.045:0.004;if(Math.random()<p)gone.add(c.id);});
+      if(gone.size){w.citizens=w.citizens.filter(c=>!gone.has(c.id));deaths+=gone.size;}
+      if(w.citizens.length&&w.food>12&&w.environment>15&&w.citizens.length<1000){const count=Math.min(8,Math.floor(w.citizens.length*.018)+(Math.random()<.22?1:0));for(let i=0;i<count&&w.citizens.length<1000;i++){const c=newCitizen("random");c.age=0;c.memory=["이 세계에서 태어났습니다."];addCitizenToSettlement(w,c);births++;}}
+    }
+    syncSettlementPopulations(w);if(births)addEvent(w,"새로운 세대의 탄생",births+"명의 아이가 태어났습니다. 각 마을의 거주 인구에 반영됩니다.","👶","people");if(deaths)addEvent(w,"자연사",deaths+"명의 시민이 나이와 생애주기에 따라 자연사했습니다.","🕯️","people");
+  }
   function updateSettlements(w){
     ensureSettlements(w);syncSettlementPopulations(w);
     w.settlementData.forEach(a=>{a.environment=settlementEnvironment(w,a);a.level=Math.max(a.level||0,Math.max(0,w.techIndex));a.type=settlementType(w,a);a.radius=2.7+Math.min(12,Math.sqrt(a.population)*.72+(a.level>=5?2:0));});
