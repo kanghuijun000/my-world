@@ -175,6 +175,7 @@
   }
   function renderWorld(){
     const w=activeWorld();if(!w)return;
+    if(window.World3D){window.World3D.setWorld(w);window.World3D.resize();}
     $("activeWorldName").textContent=w.name;$("worldSubtitle").textContent=w.techIndex>=3?"지식과 정착지가 성장하고 있습니다.":"문명의 첫 장을 관찰하세요.";
     $("worldYear").textContent=formatYear(w);$("worldDay").textContent=formatDays(w);
     $("speedSlider").value=w.speed;$("speedLabel").textContent=w.speed+"×";
@@ -237,7 +238,7 @@
       }
     }catch(e){}
   }
-  function openWorld(id){if(!worlds.some(w=>w.id===id))return;requestLandscape();activeId=id;activeFilter="all";activeScale="world";document.body.classList.add("world-active");document.body.classList.remove("tools-open");$("toolToggleBtn").setAttribute("aria-expanded","false");$("toolToggleBtn").querySelector(".tool-toggle-label").textContent="도구 열기";$("homeView").classList.add("hidden");$("worldView").classList.remove("hidden");$("worldMenu").classList.add("hidden");$("reactionFilters").querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.filter==="all"));renderWorld();window.scrollTo({top:0,behavior:"smooth"});}
+  function openWorld(id){if(!worlds.some(w=>w.id===id))return;requestLandscape();activeId=id;activeFilter="all";activeScale="world";if(window.World3D)window.World3D.setScale("world");document.body.classList.add("world-active");document.body.classList.remove("tools-open");$("toolToggleBtn").setAttribute("aria-expanded","false");$("toolToggleBtn").querySelector(".tool-toggle-label").textContent="도구 열기";$("homeView").classList.add("hidden");$("worldView").classList.remove("hidden");$("worldMenu").classList.add("hidden");$("reactionFilters").querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.filter==="all"));renderWorld();window.scrollTo({top:0,behavior:"smooth"});}
   function goHome(){activeId=null;document.body.classList.remove("world-active","tools-open");$("worldView").classList.add("hidden");$("homeView").classList.remove("hidden");$("worldMenu").classList.add("hidden");renderHome();window.scrollTo({top:0,behavior:"smooth"});}
   function showModal(title,body,buttons,kicker="WORLD LAB"){
     $("modalTitle").textContent=title;$("modalKicker").textContent=kicker;$("modalBody").innerHTML=body;$("modalFooter").innerHTML="";
@@ -360,38 +361,49 @@
     showModal(c.name,"<div style='display:flex;gap:13px;align-items:center;margin-bottom:16px'><div class='avatar' style='width:54px;height:54px;font-size:24px'>"+esc(c.icon)+"</div><div><strong style='font-size:15px'>"+esc(c.name)+"</strong><p style='color:#a6b6cf;font-size:11px;margin:6px 0'>"+esc(c.job)+" · "+esc(c.age)+"세</p><span class='pill'>"+esc(c.trait)+"</span></div></div><div class='form-field'><label>개인 능력</label><div class='modal-note'>기술 숙련도 "+esc(c.skill)+"/5 · 사회적 관계 "+esc(c.relations)+"명</div></div><div class='form-field'><label>기억</label><ul style='margin:0;padding-left:19px;color:#b7c5d8;font-size:11px;line-height:1.8'>"+memories+"</ul></div><div class='modal-note'>시민의 상세한 감정·관계 시뮬레이션은 기초 단계입니다. 현재 기록은 실제 세계 사건과 시민 생성에 기반합니다.</div>",[{label:"닫기",className:"primary-btn",onClick:closeModal}],"CITIZEN PROFILE");
   }
   function bindMapGestures(){
-    const map=$("worldMap"),scene=$("mapScene");if(!map||!scene)return;
-    const points=new Map();let startDistance=0,startZoom=1,startMid=null,startPan={x:0,y:0},dragStart=null;
-    let zoom=1,panX=0,panY=0;
+    const map=$("worldMap");if(!map)return;
+    const has3d=!!(window.World3D&&window.World3D.init($("world3dHost")));
+    if(has3d)map.classList.add("has-world3d");
+    const points=new Map();let startDistance=0,startZoom=1,startMid=null,lastMid=null,dragStart=null,dragged=false;
+    let zoom=1;
     const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
-    const apply=()=>{scene.style.setProperty("--map-zoom",String(zoom));scene.style.setProperty("--pan-x",panX+"px");scene.style.setProperty("--pan-y",panY+"px");};
     const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
     const midpoint=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
     const point=e=>({x:e.clientX,y:e.clientY});
+    const applyZoom=value=>{zoom=clamp(value,.8,5);if(has3d)window.World3D.setZoom(zoom);else{const scene=$("mapScene");if(scene)scene.style.transform="translate3d(0,0,0) scale("+zoom+")";}};
     map.style.touchAction="none";
     map.addEventListener("pointerdown",e=>{
       if(e.target.closest("button,.map-toolbar,.map-overlay-head,.map-caption,.tool-toggle"))return;
       points.set(e.pointerId,point(e));try{map.setPointerCapture(e.pointerId);}catch(_){}
-      if(points.size===1){dragStart=point(e);startPan={x:panX,y:panY};}
-      if(points.size===2){const a=[...points.values()];startDistance=distance(a[0],a[1]);startZoom=zoom;startMid=midpoint(a[0],a[1]);startPan={x:panX,y:panY};}
+      dragged=false;
+      if(points.size===1){dragStart=point(e);lastMid=point(e);}
+      if(points.size===2){const a=[...points.values()];startDistance=distance(a[0],a[1]);startZoom=zoom;startMid=midpoint(a[0],a[1]);lastMid=startMid;}
     });
     map.addEventListener("pointermove",e=>{
       if(!points.has(e.pointerId))return;
       points.set(e.pointerId,point(e));
       if(points.size>=2){
         const a=[...points.values()],d=distance(a[0],a[1]),mid=midpoint(a[0],a[1]);
-        if(startDistance>0)zoom=clamp(startZoom*d/startDistance,0.8,5);
-        if(startMid){panX=startPan.x+(mid.x-startMid.x);panY=startPan.y+(mid.y-startMid.y);}
-        apply();e.preventDefault();
+        if(startDistance>0)applyZoom(startZoom*d/startDistance);
+        if(startMid&&lastMid&&has3d)window.World3D.pan(mid.x-lastMid.x,mid.y-lastMid.y);
+        if(startMid&&lastMid&&!has3d){const scene=$("mapScene");if(scene){const dx=mid.x-startMid.x,dy=mid.y-startMid.y;scene.style.transform="translate3d("+dx+"px,"+dy+"px,0) scale("+zoom+")";}}
+        lastMid=mid;dragged=true;e.preventDefault();
       }else if(points.size===1&&dragStart){
-        panX=startPan.x+(e.clientX-dragStart.x);panY=startPan.y+(e.clientY-dragStart.y);apply();e.preventDefault();
+        const p=point(e),dx=p.x-lastMid.x,dy=p.y-lastMid.y;
+        if(Math.abs(p.x-dragStart.x)+Math.abs(p.y-dragStart.y)>4)dragged=true;
+        if(has3d)window.World3D.pan(dx,dy);
+        else{const scene=$("mapScene");if(scene)scene.style.transform="translate3d("+(p.x-dragStart.x)+"px,"+(p.y-dragStart.y)+"px,0) scale("+zoom+")";}
+        lastMid=p;e.preventDefault();
       }
     },{passive:false});
-    const end=e=>{points.delete(e.pointerId);if(points.size<2){startDistance=0;startMid=null;}if(points.size===1){dragStart=[...points.values()][0];startPan={x:panX,y:panY};}else dragStart=null;};
+    const end=e=>{points.delete(e.pointerId);if(points.size<2){startDistance=0;startMid=null;}if(points.size===1){dragStart=[...points.values()][0];lastMid=dragStart;}else dragStart=null;};
     map.addEventListener("pointerup",end);map.addEventListener("pointercancel",end);map.addEventListener("lostpointercapture",end);
-    map.addEventListener("wheel",e=>{if(e.target.closest(".map-toolbar,.map-overlay-head,.map-caption,.tool-toggle"))return;e.preventDefault();zoom=clamp(zoom*(e.deltaY<0?1.12:0.89),0.8,5);apply();},{passive:false});
-    document.querySelectorAll("[data-scale]").forEach(btn=>btn.addEventListener("click",()=>{const levels={world:1,continent:1.08,country:1.2,city:1.12,village:1.08};zoom=levels[btn.dataset.scale]||1;panX=0;panY=0;apply();}));
-    apply();
+    map.addEventListener("wheel",e=>{if(e.target.closest(".map-toolbar,.map-overlay-head,.map-caption,.tool-toggle"))return;e.preventDefault();applyZoom(zoom*(e.deltaY<0?1.12:.89));},{passive:false});
+    document.querySelectorAll("[data-scale]").forEach(btn=>btn.addEventListener("click",()=>{zoom=1;if(has3d){window.World3D.setScale(btn.dataset.scale);window.World3D.setZoom(1);}else{const scene=$("mapScene");if(scene)scene.style.transform="translate3d(0,0,0) scale(1)";}}));
+    $("zoomInBtn").addEventListener("click",()=>applyZoom(zoom*1.22));
+    $("zoomOutBtn").addEventListener("click",()=>applyZoom(zoom/1.22));
+    window.addEventListener("world3dcitizenclick",e=>{if(e.detail&&e.detail.id)showCitizen(e.detail.id);});
+    applyZoom(1);
   }
   function bind(){
     $("startBtn").addEventListener("click",()=>{enterLandscapeMode();$("welcomeView").classList.add("hidden");$("homeView").classList.remove("hidden");renderHome();window.scrollTo({top:0,behavior:"smooth"});});
@@ -420,7 +432,7 @@
     window.addEventListener("beforeunload",save);
     bindMapGestures();
   }
-  function setScale(scale){if(!levelNames[scale])return;activeScale=scale;document.querySelectorAll("[data-scale]").forEach(b=>b.classList.toggle("active",b.dataset.scale===scale));if(activeWorld())renderWorld();}
+  function setScale(scale){if(!levelNames[scale])return;activeScale=scale;if(window.World3D){window.World3D.setScale(scale);window.World3D.setZoom(1);}document.querySelectorAll("[data-scale]").forEach(b=>b.classList.toggle("active",b.dataset.scale===scale));if(activeWorld())renderWorld();}
   function startSimulation(){
     clearInterval(tickTimer);
     tickTimer=setInterval(()=>{
