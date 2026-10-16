@@ -14,14 +14,26 @@
     {name:"디지털 시대",label:"디지털 시대",need:410,icon:"💻",desc:"정보를 빠르게 기록하고 전달하는 기술이 등장합니다."}
   ];
   const achievementDefs = [
-    {id:"birth",name:"창조주의 첫걸음",desc:"첫 번째 세계를 만드세요.",icon:"🌌",test:w=>true},
-    {id:"people25",name:"작은 공동체",desc:"인구 25명에 도달하세요.",icon:"♟",test:w=>w.population>=25},
-    {id:"people50",name:"북적이는 세상",desc:"인구 50명에 도달하세요.",icon:"🏘️",test:w=>w.population>=50},
-    {id:"village",name:"정착의 시작",desc:"첫 마을을 형성하세요.",icon:"🏡",test:w=>w.settlements>=2},
-    {id:"fire",name:"불을 다루는 자",desc:"불의 활용법을 발견하세요.",icon:"🔥",test:w=>w.techIndex>=0},
-    {id:"farming",name:"씨앗의 약속",desc:"농경 기술을 발견하세요.",icon:"🌾",test:w=>w.techIndex>=1},
-    {id:"science",name:"질문의 힘",desc:"과학 혁명에 도달하세요.",icon:"🔭",test:w=>w.techIndex>=4},
-    {id:"electric",name:"밝아지는 미래",desc:"전기의 원리를 발견하세요.",icon:"⚡",test:w=>w.techIndex>=6}
+    {id:"birth",name:"태초의 목격자",desc:"새로운 세계의 첫날을 맞이하세요.",icon:"🌌",test:w=>true},
+    {id:"firstSteps",name:"발자국은 남는다",desc:"세계가 1년의 시간을 지나도록 지켜보세요.",icon:"👣",test:w=>w.elapsedDays>=365},
+    {id:"people25",name:"열두 명으론 부족해",desc:"인구 25명에 도달하세요.",icon:"♟",test:w=>w.population>=25},
+    {id:"people50",name:"이제 동네가 아니라 도시",desc:"인구 50명에 도달하세요.",icon:"🏘️",test:w=>w.population>=50},
+    {id:"village",name:"이사 왔습니다!",desc:"이동 생활을 끝내고 두 번째 정착지를 만드세요.",icon:"🏡",test:w=>w.settlements>=2},
+    {id:"fire",name:"불씨 지킴이",desc:"불을 다루는 법을 처음 익히세요.",icon:"🔥",test:w=>w.techIndex>=0},
+    {id:"farming",name:"씨앗 투자자",desc:"농경 기술을 발견하세요.",icon:"🌾",test:w=>w.techIndex>=1},
+    {id:"iron",name:"돌멩이와 작별",desc:"철기 시대의 문을 여세요.",icon:"⚒️",test:w=>w.techIndex>=2},
+    {id:"writing",name:"까먹기 전에 적자",desc:"문자를 발명해 지식을 기록하세요.",icon:"📜",test:w=>w.techIndex>=3},
+    {id:"science",name:"왜?를 멈추지 마",desc:"과학의 시대에 도달하세요.",icon:"🔭",test:w=>w.techIndex>=4},
+    {id:"industry",name:"굴뚝이 늘어난다",desc:"산업 시대를 시작하세요.",icon:"⚙️",test:w=>w.techIndex>=5},
+    {id:"electric",name:"어둠아, 잠깐 안녕",desc:"전기의 원리를 발견하세요.",icon:"⚡",test:w=>w.techIndex>=6},
+    {id:"digital",name:"돌판에서 화면으로",desc:"디지털 시대에 도달하세요.",icon:"💻",test:w=>w.techIndex>=7},
+    {id:"settlements3",name:"부동산이 뜨겁다",desc:"정착지 3곳을 보유하세요.",icon:"🗺️",test:w=>w.settlements>=3},
+    {id:"environment",name:"자연과의 약속",desc:"환경 상태를 90 이상으로 유지하세요.",icon:"🌿",test:w=>w.environment>=90},
+    {id:"food",name:"곳간이 든든해",desc:"식량을 100까지 확보하세요.",icon:"🧺",test:w=>w.food>=100},
+    {id:"population100",name:"작은 나라의 탄생",desc:"인구 100명에 도달하세요.",icon:"🎉",test:w=>w.population>=100},
+    {id:"research100",name:"연구실 불 꺼질 날 없음",desc:"연구 점수 100을 모으세요.",icon:"🧪",test:w=>w.research>=100},
+    {id:"survive10",name:"꽤 오래 살았네",desc:"세계에서 10년을 보내세요.",icon:"⌛",test:w=>w.elapsedDays>=3650},
+    {id:"city",name:"도시의 불빛",desc:"도시 수준의 정착지를 만들어 보세요.",icon:"🌆",test:w=>w.techIndex>=5&&w.settlements>=2}
   ];
   const firstNames = ["하린","도윤","서아","지호","유나","민준","시온","하윤","은우","서윤","이안","채원","지안","연우","수아","태오","다온","라온","준서","예린","가온","현우","소율","시우","아린","로운","나윤","건우","유진","민서"];
   const traits = ["호기심 많은","신중한","낙천적인","끈기 있는","관찰력이 뛰어난","상상력이 풍부한","협동적인","독립적인","차분한","모험을 좋아하는"];
@@ -103,13 +115,8 @@
       }
     }
   }
-  function worldYearNumber(w){return -10000+Math.floor(w.elapsedDays/365);}
-  function formatYear(w){
-    const y=worldYearNumber(w);
-    if(y<0)return "기원전 "+Math.abs(y).toLocaleString("ko-KR")+"년";
-    if(y===0)return "기원전 1년";
-    return y.toLocaleString("ko-KR")+"년";
-  }
+  function worldYearNumber(w){return Math.floor(Math.max(0,w.elapsedDays)/365);}
+  function formatYear(w){return worldYearNumber(w).toLocaleString("ko-KR")+"년";}
   function formatDays(w){return (Math.floor(w.elapsedDays)+1).toLocaleString("ko-KR")+"일 차";}
   function techLabel(w){return w.techIndex>=0?techStages[Math.min(w.techIndex,techStages.length-1)].label:"구석기 시대";}
   function environmentLabel(w){return w.environment>=75?"안정적":w.environment>=45?"변화 중":"주의 필요";}
@@ -147,10 +154,11 @@
       w.techIndex++;
       const t=techStages[w.techIndex];
       addEvent(t.name+" 발견!",t.desc,t.icon,"discovery");reactToEvent(w,t.name+" 발견!","discovery");
-      if(w.techIndex===1){w.food=Math.min(100,w.food+12);addEvent(w,"식량 생산 방식 개선","농경 지식이 식량 확보에 도움을 주기 시작했습니다.","🌾","system");}
-      if(w.techIndex===3){w.settlements=Math.max(2,w.settlements);addEvent(w,"기록과 지식의 전승","기록 기술 덕분에 지식을 다음 세대에 전하기 쉬워졌습니다.","📜","civilization");}
+      if(w.techIndex===1){w.food=Math.min(100,w.food+12);addEvent(w,"이동 생활의 끝, 첫 정착","씨앗을 심고 수확을 기다리기로 했습니다. 이제 이곳은 잠시 머무는 곳이 아니라 집입니다.","🏡","milestone");}
+      if(w.techIndex===2){addEvent(w,"철기 시대의 시작","더 단단한 도구가 농사와 건축, 생활을 바꾸기 시작했습니다.","⚒️","milestone");}
+      if(w.techIndex===3){w.settlements=Math.max(2,w.settlements);addEvent(w,"문자로 남긴 첫 기록","이제 중요한 지식과 약속을 다음 세대에 전할 수 있습니다.","📜","milestone");}
       if(w.techIndex===5){w.environment=Math.max(0,w.environment-5);addEvent(w,"산업 활동의 확대","생산량이 늘기 시작했지만 자원 소비와 환경 부담도 커지고 있습니다.","🏭","nature");}
-      if(w.techIndex===6){addEvent(w,"전기 기술의 초기 발견","전기의 원리를 이해하기 시작했습니다. 아직 전력망이나 가정용 전등이 널리 보급된 것은 아닙니다.","⚡","discovery");}
+      if(w.techIndex===6){addEvent(w,"전기의 발견","자연의 전기 현상을 이해하기 시작했습니다. 불빛이 일상에 퍼지기까지는 더 많은 발명이 필요합니다.","⚡","milestone");}
       unlockAchievements(w);
     }
     const day=Math.floor(w.elapsedDays);
@@ -161,10 +169,11 @@
         const count=Math.min(2,Math.floor((w.population/18)+Math.random()));
         if(count>0){for(let i=0;i<count;i++)w.citizens.push(newCitizen("random"));w.population=w.citizens.length;addEvent(w,"공동체 인구 증가","식량과 환경 조건이 비교적 안정적이어서 새로운 주민이 태어나거나 합류했습니다.","👶","people");unlockAchievements(w);}
       }
-      if(w.techIndex>=1&&w.settlements<2&&w.population>=18&&Math.random()<.5){w.settlements=2;addEvent(w,"새로운 마을 형성","인구와 농경 지식이 늘어나면서 일부 주민이 새로운 정착지를 만들었습니다.","🏡","village");unlockAchievements(w);}
+      if(w.techIndex>=1&&w.settlements<2&&w.population>=18&&Math.random()<.5){w.settlements=2;addEvent(w,"새로운 마을 건설","몇몇 가족이 새 터전을 만들었습니다. 세계 지도에 두 번째 마을이 생겼습니다.","🏡","milestone");unlockAchievements(w);}
+      else if(w.techIndex>=5&&w.settlements>=2&&w.settlements<3&&w.population>=35&&Math.random()<.25){w.settlements=3;addEvent(w,"새로운 도시의 탄생","사람과 기술이 모이며 마을 하나가 도시로 성장했습니다.","🌆","milestone");unlockAchievements(w);}
       if(w.environment<35&&Math.random()<.3){addEvent(w,"환경 부담 증가","자원 소비와 정착지 확장으로 자연 환경이 압박을 받고 있습니다.","🌫️","nature");}
     }
-    if(day>0&&crossed365){addEvent(w,"새로운 해","세계의 시간이 흐르고 있습니다. 주민들의 지식과 생활 방식은 환경과 자원에 영향을 받습니다.","⌛","system");}
+    if(day>0&&crossed365){unlockAchievements(w);}
   }
   function renderHome(){
     $("worldCount").textContent=worlds.length;
@@ -183,7 +192,8 @@
     $("runState").classList.toggle("paused",w.paused);$("runState").innerHTML="<i></i>"+(w.paused?"일시 정지":"진행 중");
     $("populationStat").textContent=w.population.toLocaleString("ko-KR")+"명";$("techStat").textContent=techLabel(w);$("natureStat").textContent=environmentLabel(w);$("settlementStat").textContent=w.settlements+"곳";
     $("eventCount").textContent=w.events.length+"개 기록";
-    $("eventFeed").innerHTML=w.events.slice(0,8).map(e=>'<div class="event-item"><div class="event-icon">'+esc(e.icon)+'</div><div class="event-content"><strong>'+esc(e.title)+(e.category==="achievement"?' <span class="event-tag">ACHIEVEMENT</span>':'')+'</strong><p>'+esc(e.description)+'</p><time>'+esc(e.year<0?"기원전 "+Math.abs(e.year)+"년":e.year+"년")+" · "+e.day+"일 차</time></div></div>").join("")||'<div class="empty-inline">아직 기록이 없습니다.</div>';
+    const importantEvents=w.events.filter(e=>e.category==="milestone"||e.category==="achievement"||/세계의 탄생|불의 활용|불의 시대|전기의 발견|철기 시대|새로운 도시|새로운 마을|정착|산업 혁명|디지털 시대|문자로 남긴/.test(e.title));
+    $("eventFeed").innerHTML=importantEvents.slice(0,8).map(e=>'<div class="event-item"><div class="event-icon">'+esc(e.icon)+'</div><div class="event-content"><strong>'+esc(e.title)+(e.category==="achievement"?' <span class="event-tag">ACHIEVEMENT</span>':'')+'</strong><p>'+esc(e.description)+'</p><time>'+esc(e.year<0?"기원전 "+Math.abs(e.year)+"년":e.year+"년")+" · "+e.day+"일 차</time></div></div>").join("")||'<div class="empty-inline">아직 기록이 없습니다.</div>';
     const filtered=w.reactions.filter(r=>activeFilter==="all"||r.sentiment===activeFilter);
     $("reactionFeed").innerHTML=filtered.slice(0,6).map(r=>'<div class="reaction-item '+esc(r.sentiment)+'"><div class="avatar">'+(r.sentiment==="negative"?"💭":"🗨️")+'</div><div class="reaction-copy"><strong>'+esc(r.name)+'</strong><span>'+esc(r.trait)+'</span><p>'+esc(r.text)+' <span>· '+esc(r.eventTitle)+'</span></p></div></div>').join("")||'<div class="empty-inline">이 필터에 해당하는 반응이 없습니다.</div>';
     $("achievementCount").textContent=w.achievements.length+" / "+achievementDefs.length;$("achievementProgress").style.width=(w.achievements.length/achievementDefs.length*100)+"%";
