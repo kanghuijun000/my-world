@@ -142,33 +142,16 @@
   }
   function settlementEnvironment(w,a){const x=a.x||0,z=a.z||0;if(x>25&&z>5)return "건조 지대";if(z<-25||Math.abs(x)>40)return "산지";if(Math.abs(x-4)<18&&z>-28&&z<24)return "강변 비옥지";if(z>-28&&z<24&&x>-32&&x<28)return "초원 농경지";return "숲과 사냥터";}
   function settlementType(w,a){if(a.level>=5||a.population>=80)return "고도로 발전한 도시";if(a.level>=3||a.population>=45)return "산업·상업 도시";if(a.level>=2||a.population>=25)return "성장 중인 도시";if(a.level>=1)return /비옥지|농경지/.test(settlementEnvironment(w,a))?"농경 마을":"정착 마을";return "수렵·채집 야영지";}
-  function createSettlementInWorld(w,city){const i=w.settlementData.length,a=makeSettlementRecord(i,w.techIndex);a.name=settlementNames[(i+Math.floor(Math.random()*settlementNames.length))%settlementNames.length];a.population=city?Math.max(20,Math.floor(w.population*.18)):Math.max(5,Math.floor(w.population*.12));a.level=w.techIndex;a.radius=city?7:4.8;a.nationId=w.nations[0]?.id||"nation-0";w.settlementData.push(a);w.settlements=w.settlementData.length;const n=w.nations.find(n=>n.id===a.nationId);if(n)n.settlementIds.push(a.id);}
-  function updateSettlements(w){ensureSettlements(w);w.settlementData.forEach(a=>{a.environment=settlementEnvironment(w,a);a.level=Math.max(a.level||0,Math.max(0,w.techIndex));a.population=w.population<=0?0:Math.max(0,Math.round(a.population*.96+Math.max(1,Math.floor(w.population/w.settlementData.length))*.04+(w.food>25?1:0)-(w.food<12?2:0)));a.type=settlementType(w,a);a.radius=Math.max(2.7,Math.min(15,2.7+Math.sqrt(a.population)*.72+(a.level>=5?2:0)));});
-    const ss=w.settlementData;for(let i=0;i<ss.length;i++)for(let j=i+1;j<ss.length;j++){const a=ss[i],b=ss[j];if(a.nationId===b.nationId)continue;const n=w.nations.find(n=>n.id===a.nationId),m=w.nations.find(n=>n.id===b.nationId);if(!n||!m)continue;const war=n.atWarWith.includes(m.id);if(!war&&Math.hypot(a.x-b.x,a.z-b.z)<34&&Math.random()<.025){n.atWarWith.push(m.id);m.atWarWith.push(n.id);addEvent(w,"국경 분쟁 발발",a.name+"과 "+b.name+" 사이에 영역 분쟁이 시작됐습니다.","⚔️","milestone");}else if(war&&Math.random()<.1){const loser=Math.random()<.5?a:b,winner=loser===a?b:a;loser.population=Math.floor(loser.population*.6);if(loser.population<=2){w.settlementData=w.settlementData.filter(x=>x.id!==loser.id);w.settlements=w.settlementData.length;addEvent(w,"정착지의 몰락",loser.name+"이 전쟁으로 사라졌습니다. "+winner.name+"의 영향력이 커졌습니다.","🏚️","milestone");}else addEvent(w,"전쟁으로 인한 인구 감소",loser.name+"의 인구와 영역이 줄었습니다.","⚔️","milestone");n.atWarWith=n.atWarWith.filter(id=>id!==m.id);m.atWarWith=m.atWarWith.filter(id=>id!==n.id);}}
-    if(ss.length>=2&&w.nations.length===1&&w.techIndex>=2&&Math.random()<.12){const a=ss[ss.length-1],id="nation-"+uid(),n={id,name:nationNames[w.nations.length%nationNames.length],settlementIds:[a.id],atWarWith:[],alive:true};w.nations.push(n);w.nations[0].settlementIds=w.nations[0].settlementIds.filter(x=>x!==a.id);a.nationId=id;addEvent(w,"새로운 국가의 등장",n.name+"이 독립 세력으로 등장했습니다.","🏳️","milestone");}}
-  function syncSettlementPopulations(w){
-    if(!w.settlementData?.length)return;
-    const valid=new Set(w.settlementData.map(a=>a.id));let next=0;
-    w.citizens.forEach(c=>{if(!c.homeSettlementId||!valid.has(c.homeSettlementId)){c.homeSettlementId=w.settlementData[next%w.settlementData.length].id;next++;}});
-    const counts=new Map(w.settlementData.map(a=>[a.id,0]));w.citizens.forEach(c=>counts.set(c.homeSettlementId,(counts.get(c.homeSettlementId)||0)+1));
-    w.settlementData.forEach(a=>{a.population=counts.get(a.id)||0;});w.population=w.citizens.length;
-    w.nations.forEach(n=>{n.settlementIds=w.settlementData.filter(a=>a.nationId===n.id).map(a=>a.id);});
+  function createSettlementInWorld(w,city){
+    const i=w.settlementData.length,a=makeSettlementRecord(i,w.techIndex);a.name=settlementNames[(i+Math.floor(Math.random()*settlementNames.length))%settlementNames.length];a.level=w.techIndex;a.radius=city?7:4.8;a.nationId=w.nations[0]?.id||"nation-0";w.settlementData.push(a);w.settlements=w.settlementData.length;
+    const n=w.nations.find(n=>n.id===a.nationId);if(n)n.settlementIds.push(a.id);
+    const donor=w.settlementData.filter(x=>x.id!==a.id).sort((x,y)=>y.population-x.population)[0];if(donor){let moved=0;for(const c of w.citizens){if(c.homeSettlementId===donor.id&&moved<Math.max(1,Math.floor(w.citizens.length*.12))&&donor.population>1){c.homeSettlementId=a.id;moved++;}}}
+    syncSettlementPopulations(w);return a;
   }
-  function assignCitizen(w,c){const a=w.settlementData.slice().sort((x,y)=>x.population-y.population)[0];c.homeSettlementId=a?.id||w.settlementData[0]?.id||null;w.citizens.push(c);}
-  function simulateDemography(w,years){
-    let births=0,deaths=0;const span=Math.max(1,Math.min(100,Math.floor(years)||1));
-    for(let y=0;y<span;y++){
-      const gone=new Set();
-      w.citizens.forEach(c=>{c.age=Math.max(0,Number(c.age)||0)+1;const p=c.age>=105?0.32:c.age>=95?0.20:c.age>=85?0.10:c.age>=75?0.045:0.004;if(Math.random()<p)gone.add(c.id);});
-      if(gone.size){w.citizens=w.citizens.filter(c=>!gone.has(c.id));deaths+=gone.size;}
-      if(w.citizens.length&&w.food>12&&w.environment>15&&w.citizens.length<1000){
-        const count=Math.min(8,Math.floor(w.citizens.length*.018)+(Math.random()<.22?1:0));
-        for(let i=0;i<count&&w.citizens.length<1000;i++){const c=newCitizen("random");c.age=0;c.memory=["이 세계에서 태어났습니다."];assignCitizen(w,c);births++;}
-      }
-    }
-    syncSettlementPopulations(w);
-    if(births)addEvent(w,"새로운 세대의 탄생",births+"명의 아이가 태어났습니다. 각 마을의 거주 인구에 반영됩니다.","👶","people");
-    if(deaths)addEvent(w,"자연사",deaths+"명의 시민이 나이와 생애주기에 따라 자연사했습니다.","🕯️","people");
+  function updateSettlements(w){
+    ensureSettlements(w);syncSettlementPopulations(w);
+    w.settlementData.forEach(a=>{a.environment=settlementEnvironment(w,a);a.level=Math.max(a.level||0,Math.max(0,w.techIndex));a.type=settlementType(w,a);a.radius=2.7+Math.min(12,Math.sqrt(a.population)*.72+(a.level>=5?2:0));});
+    if(w.settlementData.length>=2&&w.nations.length===1&&w.techIndex>=2&&Math.random()<.08){const a=w.settlementData[w.settlementData.length-1],id="nation-"+uid(),n={id,name:nationNames[w.nations.length%nationNames.length],settlementIds:[a.id],atWarWith:[],alive:true};w.nations.push(n);a.nationId=id;syncSettlementPopulations(w);addEvent(w,"새로운 국가의 등장",n.name+"이 독립 세력으로 등장했습니다.","🏳️","milestone");}
   }
   function settlementCurrentStatus(w,a){
     const nation=w.nations.find(n=>n.id===a.nationId);
