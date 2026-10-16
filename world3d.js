@@ -98,15 +98,21 @@
     return {x,z,level,radius,name,group:g};
   }
   function createPerson(c,i,x,z){
-    const g=group(root,x,heightAt(x,z),z);const skin=mat(["#b97953","#e0b18a","#8d6049","#d49a70"][i%4]),shirt=mat(["#557fa4","#bd6b55","#68976d","#c3a456","#8c79b2","#4f9692"][i%6]),pants=mat("#354150"),shoe=mat("#252d35");
+    const g=group(root,x,heightAt(x,z),z),tech=Number.isFinite(worldData?.techIndex)?worldData.techIndex:-1;
+    const skin=mat(["#b97953","#e0b18a","#8d6049","#d49a70"][i%4]);
+    const primitive=tech<=0,earlyFarm=tech===1,iron=tech===2,modern=tech>=5;
+    const cloth=mat(primitive?["#806044","#a17b54","#6e513e"][i%3]:earlyFarm?["#a88a61","#7f9b68","#a98f79"][i%3]:iron?["#8a765e","#6d7774","#9c8b70"][i%3]:["#557fa4","#bd6b55","#68976d","#c3a456","#8c79b2","#4f9692"][i%6]);
+    const pants=mat(primitive?"#72563f":earlyFarm?"#8d785c":iron?"#555b5b":modern?"#354150":"#6f6557"),shoe=mat(primitive?"#654a36":"#252d35");
     mesh(g,new THREE.SphereGeometry(.14,12,9),skin,0,1.52,0);
-    mesh(g,new THREE.CylinderGeometry(.12,.18,.48,9),shirt,0,1.18,0);
+    if(primitive){mesh(g,new THREE.ConeGeometry(.22,.48,7),cloth,0,1.13,0);mesh(g,new THREE.BoxGeometry(.13,.13,.025),mat("#d2b58b"),0,1.3,.15);}
+    else{mesh(g,new THREE.CylinderGeometry(.12,.18,.48,9),cloth,0,1.18,0);if(earlyFarm){const wrap=mesh(g,new THREE.BoxGeometry(.25,.08,.22),mat("#b8a17b"),0,1.35,0);wrap.rotation.z=-.2;}if(iron){mesh(g,new THREE.BoxGeometry(.29,.25,.22),mat("#7d827d"),0,1.23,.02);}}
     const armL=group(g,-.16,1.37,0),armR=group(g,.16,1.37,0);
-    mesh(armL,new THREE.CylinderGeometry(.045,.055,.39,7),skin,0,-.19,0).rotation.z=-.12;
-    mesh(armR,new THREE.CylinderGeometry(.045,.055,.39,7),skin,0,-.19,0).rotation.z=.12;
+    mesh(armL,new THREE.CylinderGeometry(.045,.055,.39,7),primitive?skin:cloth,0,-.19,0).rotation.z=-.12;
+    mesh(armR,new THREE.CylinderGeometry(.045,.055,.39,7),primitive?skin:cloth,0,-.19,0).rotation.z=.12;
     const legL=group(g,-.075,.94,0),legR=group(g,.075,.94,0);
-    mesh(legL,new THREE.CylinderGeometry(.05,.06,.43,7),pants,0,-.21,0);mesh(legR,new THREE.CylinderGeometry(.05,.06,.43,7),pants,0,-.21,0);
-    mesh(legL,new THREE.BoxGeometry(.12,.075,.22),shoe,0,-.44,.05);mesh(legR,new THREE.BoxGeometry(.12,.075,.22),shoe,0,-.44,.05);
+    mesh(legL,new THREE.CylinderGeometry(.05,.06,.43,7),primitive?skin:pants,0,-.21,0);mesh(legR,new THREE.CylinderGeometry(.05,.06,.43,7),primitive?skin:pants,0,-.21,0);
+    if(!primitive){mesh(legL,new THREE.BoxGeometry(.12,.075,.22),shoe,0,-.44,.05);mesh(legR,new THREE.BoxGeometry(.12,.075,.22),shoe,0,-.44,.05);}
+    if(modern){mesh(g,new THREE.BoxGeometry(.035,.3,.035),mat("#d7dce0"),-.18,1.35,.03);}
     const halo=mesh(g,new THREE.CircleGeometry(.26,12),new THREE.MeshBasicMaterial({color:"#23302b",transparent:true,opacity:.22}),0,.02,0);halo.rotation.x=-Math.PI/2;halo.castShadow=false;
     const near=settlements.slice().sort((a,b)=>Math.hypot(a.x-x,a.z-z)-Math.hypot(b.x-x,b.z-z))[0];
     const angle=rand(i+9)*Math.PI*2,rad=near?near.radius*.45:5;
