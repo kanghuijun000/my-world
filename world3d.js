@@ -80,22 +80,24 @@
     for(let y=.6*s;y<h;y+=.62*s)for(let xw of [-.3,.3])mesh(g,new THREE.BoxGeometry(.13*s,.18*s,.025*s),mat("#e5d7a5"),xw,y,.49*s).castShadow=false;
     return g;
   }
-  function createSettlement(index,total,tech){
-    const angle=index*2.39996,dist=10+Math.sqrt(index)*12,x=Math.cos(angle)*dist-7,z=Math.sin(angle)*dist+6;
-    const level=index===0?Math.max(0,tech):tech>=5?Math.max(2,tech-2):tech>=3?1:0;
-    const name=index===0?"첫 정착지":level>=2?"발전 도시 "+index:"정착지 "+(index+1);
-    const g=group(root,x,heightAt(x,z),z);const radius=level>=2?7:level===1?4.8:2.7;
+  function createSettlement(index,total,tech,data){
+    const angle=index*2.39996,dist=10+Math.sqrt(index)*12,x=Number.isFinite(data?.x)?data.x:Math.cos(angle)*dist-7,z=Number.isFinite(data?.z)?data.z:Math.sin(angle)*dist+6;
+    const level=Math.max(0,Number.isFinite(data?.level)?data.level:(index===0?Math.max(0,tech):tech>=5?Math.max(2,tech-2):tech>=3?1:0));
+    const name=data?.name||(index===0?"첫 정착지":level>=2?"발전 도시 "+index:"정착지 "+(index+1));
+    const g=group(root,x,heightAt(x,z),z);const radius=Number.isFinite(data?.radius)?data.radius:(level>=2?7:level===1?4.8:2.7);
     // Cleared land, roads and a central shared place.
     const pad=mesh(g,new THREE.CylinderGeometry(radius,radius,.16,28),mat(level>=2?"#8f9d72":"#9c9b78"),0,.06,0);pad.scale.z=.72;pad.castShadow=false;
     const roadmat=mat("#d8c8a6");
     const road=new THREE.Mesh(new THREE.TorusGeometry(radius*.72,.12,5,32),roadmat);road.rotation.x=Math.PI/2;road.position.y=.17;g.add(road);
-    if(level===0){for(let b=0;b<Math.min(5,3+index);b++){const a=b*Math.PI*2/5;house(x+Math.cos(a)*radius*.58,z+Math.sin(a)*radius*.48,1,b);}}
-    else if(level===1){for(let b=0;b<10;b++){const a=b*Math.PI*2/10;house(x+Math.cos(a)*radius*.65,z+Math.sin(a)*radius*.55,.8,b);}}
-    else{for(let b=0;b<18;b++){const a=b*Math.PI*2/18, bx=x+Math.cos(a)*(radius*.55+rand(b+index)*2),bz=z+Math.sin(a)*(radius*.48+rand(b+index+50)*2);tallBuilding(bx,bz,.75+rand(b+index+80)*.45,b);}}
+    const count=Math.max(3,Math.min(30,Math.round(radius*2.2)));
+    if(level<=0){for(let b=0;b<count;b++){const a=b*Math.PI*2/count;house(x+Math.cos(a)*radius*.58,z+Math.sin(a)*radius*.48,1,b);}}
+    else if(level<=2){for(let b=0;b<count;b++){const a=b*Math.PI*2/count;house(x+Math.cos(a)*radius*.65,z+Math.sin(a)*radius*.55,level===2?.95:.8,b);}}
+    else{for(let b=0;b<count+8;b++){const a=b*Math.PI*2/(count+8),bx=x+Math.cos(a)*(radius*.55+rand(b+index)*2),bz=z+Math.sin(a)*(radius*.48+rand(b+index+50)*2);tallBuilding(bx,bz,.75+rand(b+index+80)*.65,b);}}
     // A communal fire/market square anchors settlement life.
     const square=mesh(g,new THREE.CylinderGeometry(.65,.65,.14,12),mat("#c3ad83"),0,.2,0);
     if(level===0){const fire=mesh(g,new THREE.ConeGeometry(.23,.62,7),mat("#e87837"),0,.58,0);fire.rotation.z=.08;}
-    return {x,z,level,radius,name,group:g};
+    const hit=mesh(g,new THREE.CircleGeometry(radius,32),new THREE.MeshBasicMaterial({color:"#ffffff",transparent:true,opacity:.001,side:THREE.DoubleSide,depthWrite:false}),0,.24,0);hit.rotation.x=-Math.PI/2;
+    return {id:data?.id||("settlement-"+index),x,z,level,radius,name,group:g,data};
   }
   function createPerson(c,i,x,z){
     const g=group(root,x,heightAt(x,z),z),tech=Number.isFinite(worldData?.techIndex)?worldData.techIndex:-1;
@@ -121,8 +123,9 @@
   function buildWorld(){
     clearWorld();makeTerrain();
     const w=worldData||{},pop=Array.isArray(w.citizens)?w.citizens.length:12,tech=Math.max(0,w.techIndex||0);lastBuiltTech=Number.isFinite(w.techIndex)?w.techIndex:-1;
-    const settlementCount=clamp(Math.max(1,w.settlements||1,Math.floor(pop/18)+1,tech>=3?2:1),1,8);
-    for(let i=0;i<settlementCount;i++)settlements.push(createSettlement(i,settlementCount,tech));
+    const data=Array.isArray(w.settlementData)?w.settlementData.filter(a=>a.alive!==false):[];
+    const settlementCount=clamp(data.length||Math.max(1,w.settlements||1,Math.floor(pop/18)+1,tech>=3?2:1),1,8);
+    for(let i=0;i<settlementCount;i++)settlements.push(createSettlement(i,settlementCount,tech,data[i]));
     const citizens=Array.isArray(w.citizens)?w.citizens:[];
     const n=clamp(citizens.length||12,12,60);
     for(let i=0;i<n;i++){
@@ -139,9 +142,9 @@
   function setZoom(v){zoom=clamp(v,.55,4.8);updateCamera();drawMinimap();return zoom;}
   function pan(dx,dy){const scale=34/zoom/Math.max(250,host?.clientHeight||500);lookX=clamp(lookX-dx*scale,-WORLD*.48,WORLD*.48);lookZ=clamp(lookZ-dy*scale,-WORLD*.48,WORLD*.48);updateCamera();drawMinimap();}
   function setScale(){/* Intentionally no separate world/country/city modes: one continuous world. */}
-  function setWorld(w){worldData=w;if(root){const n=(w&&Array.isArray(w.citizens))?w.citizens.length:12;const expected=clamp(n||12,12,60);if(people.length!==expected||lastBuiltTech!==(Number.isFinite(w.techIndex)?w.techIndex:-1)||settlements.length!==clamp(Math.max(1,w.settlements||1,Math.floor(n/18)+1,(w.techIndex||0)>=3?2:1),1,8)){buildWorld();return;}people.forEach((p,i)=>{if(w.citizens[i])p.citizen=w.citizens[i];});drawMinimap();}}
+  function setWorld(w){worldData=w;if(root){const n=(w&&Array.isArray(w.citizens))?w.citizens.length:12,dc=Array.isArray(w?.settlementData)?w.settlementData.filter(a=>a.alive!==false).length:0;const expected=clamp(n||12,12,60);if(people.length!==expected||lastBuiltTech!==(Number.isFinite(w.techIndex)?w.techIndex:-1)||settlements.length!==clamp(dc||Math.max(1,w.settlements||1,Math.floor(n/18)+1,(w.techIndex||0)>=3?2:1),1,8)){buildWorld();return;}people.forEach((p,i)=>{if(w.citizens[i])p.citizen=w.citizens[i];});drawMinimap();}}
   function resize(){if(!renderer||!host||!camera)return;const r=host.getBoundingClientRect();if(r.width<1||r.height<1)return;renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.4));renderer.setSize(Math.round(r.width),Math.round(r.height),false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();updateCamera();}
-  function onClick(e){if(!renderer||!people.length)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-(e.clientY-rect.top)/rect.height*2+1;raycaster.setFromCamera(mouse,camera);const hits=raycaster.intersectObjects(people.map(p=>p.group),true);if(!hits.length)return;let o=hits[0].object;while(o.parent&&!people.some(p=>p.group===o))o=o.parent;const found=people.find(p=>p.group===o);if(found?.citizen?.id)window.dispatchEvent(new CustomEvent("world3dcitizenclick",{detail:{id:found.citizen.id}}));}
+  function onClick(e){if(!renderer)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-(e.clientY-rect.top)/rect.height*2+1;raycaster.setFromCamera(mouse,camera);const hits=raycaster.intersectObjects([...people.map(p=>p.group),...settlements.map(p=>p.group)],true);if(!hits.length)return;let o=hits[0].object;while(o.parent&&!people.some(p=>p.group===o)&&!settlements.some(p=>p.group===o))o=o.parent;const p=people.find(p=>p.group===o);if(p?.citizen?.id){window.dispatchEvent(new CustomEvent("world3dcitizenclick",{detail:{id:p.citizen.id}}));return;}const a=settlements.find(p=>p.group===o);if(a?.id)window.dispatchEvent(new CustomEvent("world3dsettlementclick",{detail:{id:a.id}}));}
   function focusCitizen(id){const p=people.find(x=>x.citizen&&x.citizen.id===id);if(!p)return;lookX=p.group.position.x;lookZ=p.group.position.z;zoom=Math.max(zoom,3.1);updateCamera();drawMinimap();}
   function drawMinimap(){
     if(!miniCtx)return;const ctx=miniCtx,w=mini.width,h=mini.height;ctx.clearRect(0,0,w,h);ctx.fillStyle="#203c3d";ctx.fillRect(0,0,w,h);
