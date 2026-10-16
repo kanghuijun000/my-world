@@ -131,7 +131,7 @@
   function environmentLabel(w){return w.environment>=75?"안정적":w.environment>=45?"변화 중":"주의 필요";}
   function addPeople(w,count,jobType){
     const safeCount=Math.max(1,Math.min(100,Math.floor(Number(count)||1)));
-    for(let i=0;i<safeCount&&w.citizens.length<1000;i++){const c=newCitizen(jobType);assignCitizen(w,c);}
+    for(let i=0;i<safeCount&&w.citizens.length<1000;i++){const c=newCitizen(jobType);addCitizenToSettlement(w,c);}
     w.population=w.citizens.length;syncSettlementPopulations(w);w.food=Math.max(0,w.food-safeCount*0.35);w.resources=Math.max(0,w.resources-safeCount*0.12);
     if(w.population>30)w.environment=Math.max(0,w.environment-safeCount*0.06);
     addEvent(w,"새로운 시민 "+safeCount+"명 합류","새 주민들이 공동체에 합류했습니다. 실제 거주 정착지에 배정되어 마을별 인구에 반영됩니다.","♟","people");
@@ -139,6 +139,16 @@
   }
   function settlementEnvironment(w,a){const x=a.x||0,z=a.z||0;if(x>25&&z>5)return "건조 지대";if(z<-25||Math.abs(x)>40)return "산지";if(Math.abs(x-4)<18&&z>-28&&z<24)return "강변 비옥지";if(z>-28&&z<24&&x>-32&&x<28)return "초원 농경지";return "숲과 사냥터";}
   function settlementType(w,a){if(a.level>=5||a.population>=80)return "고도로 발전한 도시";if(a.level>=3||a.population>=45)return "산업·상업 도시";if(a.level>=2||a.population>=25)return "성장 중인 도시";if(a.level>=1)return /비옥지|농경지/.test(settlementEnvironment(w,a))?"농경 마을":"정착 마을";return "수렵·채집 야영지";}
+  function syncSettlementPopulations(w){
+    if(!w.settlementData||!w.settlementData.length)return;
+    const valid=new Set(w.settlementData.map(a=>a.id));let next=0;
+    w.citizens.forEach(c=>{if(!c.homeSettlementId||!valid.has(c.homeSettlementId)){c.homeSettlementId=w.settlementData[next%w.settlementData.length].id;next++;}});
+    const counts=new Map(w.settlementData.map(a=>[a.id,0]));
+    w.citizens.forEach(c=>counts.set(c.homeSettlementId,(counts.get(c.homeSettlementId)||0)+1));
+    w.settlementData.forEach(a=>{a.population=counts.get(a.id)||0;});
+    w.population=w.citizens.length;w.settlements=w.settlementData.length;
+    (w.nations||[]).forEach(n=>{n.settlementIds=w.settlementData.filter(a=>a.nationId===n.id).map(a=>a.id);});
+  }
   function createSettlementInWorld(w,city){
     const i=w.settlementData.length,a=makeSettlementRecord(i,w.techIndex);a.name=settlementNames[(i+Math.floor(Math.random()*settlementNames.length))%settlementNames.length];a.level=w.techIndex;a.radius=city?7:4.8;a.nationId=w.nations[0]?.id||"nation-0";w.settlementData.push(a);w.settlements=w.settlementData.length;
     const n=w.nations.find(n=>n.id===a.nationId);if(n)n.settlementIds.push(a.id);
@@ -324,7 +334,7 @@
       updateSettlements(w);
       if(w.population>=12&&w.food>35&&w.environment>35&&riskInfo.riskPerDay<0.02&&Math.random()<.42){
         const count=Math.min(2,Math.floor((w.population/18)+Math.random()));
-        if(count>0){for(let i=0;i<count;i++)w.citizens.push(newCitizen("random"));w.population=w.citizens.length;addEvent(w,"공동체 인구 증가","식량과 환경 조건이 비교적 안정적이어서 새로운 주민이 태어나거나 합류했습니다.","👶","people");unlockAchievements(w);}
+        if(count>0){for(let i=0;i<count;i++){const c=newCitizen("random");c.age=0;addCitizenToSettlement(w,c);}syncSettlementPopulations(w);addEvent(w,"공동체 인구 증가","식량과 환경 조건이 비교적 안정적이어서 새로운 주민이 태어나거나 합류했습니다.","👶","people");unlockAchievements(w);}
       }
       if(w.techIndex>=1&&w.settlements<2&&w.population>=18&&Math.random()<.5){createSettlementInWorld(w,false);addEvent(w,"새로운 마을 건설","주변 환경에 맞는 새 정착지가 만들어졌습니다.","🏡","milestone");unlockAchievements(w);}
       else if(w.techIndex>=5&&w.settlements>=2&&w.settlements<5&&w.population>=35&&Math.random()<.25){createSettlementInWorld(w,true);addEvent(w,"새로운 도시의 탄생","인구와 기술이 모인 정착지가 도시로 성장했습니다.","🌆","milestone");unlockAchievements(w);}
