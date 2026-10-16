@@ -298,3 +298,24 @@ body.world-active #worldView .map-scene .geography{pointer-events:none}
 .world-map.has-world3d .map-coordinates{background:#102a35a8;padding:4px 6px;border-radius:5px}
 .world-map.has-world3d .map-town,.world-map.has-world3d .map-marker{display:none}
 @media(prefers-reduced-motion:reduce){.world3d-canvas{scroll-behavior:auto}}
+
+
+/* v10: one continuous living world with a top-right navigable minimap */
+.world-view-label{font-size:11px;color:#e0f0f2;background:#102a35a8;border:1px solid #d5f1f033;border-radius:8px;padding:7px 10px;letter-spacing:.02em;white-space:nowrap}
+.world3d-host{isolation:isolate}
+.world-minimap{position:absolute;z-index:12;top:10px;right:10px;width:min(218px,34%);padding:7px;border:1px solid #d5f1f05c;border-radius:11px;background:rgba(10,25,36,.86);box-shadow:0 8px 24px #07121b70;backdrop-filter:blur(8px);color:#f1f6f5;font:10px/1.35 Inter,"Noto Sans KR",system-ui,sans-serif;pointer-events:auto}
+.world-minimap-head,.world-minimap-foot{display:flex;align-items:center;justify-content:space-between;gap:5px}
+.world-minimap-head{padding:0 1px 5px;letter-spacing:.09em;font-size:9px;color:#b7d5d7}
+.world-minimap-head b{font-size:9px;letter-spacing:0;color:#ffe0a0;font-weight:600}
+.world-minimap canvas{display:block;width:100%;height:auto;aspect-ratio:3/2;border:1px solid #e2f1e322;border-radius:6px;touch-action:manipulation;cursor:crosshair}
+.world-minimap-foot{padding-top:5px;color:#a8bdc4;font-size:9px;justify-content:center}
+.world-map.has-world3d .map-overlay-head{z-index:13;pointer-events:none}
+.world-map.has-world3d .map-overlay-head button,.world-map.has-world3d .map-overlay-head a{pointer-events:auto}
+.world-map.has-world3d .map-scale-note{max-width:calc(100% - 20px);left:10px;right:auto;bottom:8px;font-size:10px}
+.world-map.has-world3d .map-coordinates{display:none}
+.world-map.has-world3d .map-label{display:none}
+@media(max-width:600px){
+ .world-minimap{width:min(172px,38%);top:8px;right:8px;padding:5px}
+ .world-minimap-head{font-size:8px}.world-minimap-head b,.world-minimap-foot{font-size:8px}
+ .world-view-label{font-size:9px;padding:6px 7px}
+}
