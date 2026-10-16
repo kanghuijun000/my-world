@@ -192,6 +192,32 @@
     $("mapHeading").textContent=w.techIndex>=3?"문명의 세계":"푸른 행성";$("worldMap").className="world-map scale-"+activeScale;$("mapScaleBadge").textContent=levelNames[activeScale];$("worldMap").querySelector(".town-b").classList.toggle("hidden",w.settlements<2);
     save();
   }
+  function renderMapCitizens(w){
+    const layer=$("citizenLayer");if(!layer)return;
+    const visible=w.citizens.slice(0,Math.min(36,w.citizens.length));
+    const existing=new Map(Array.from(layer.children).map(el=>[el.dataset.citizen,el]));
+    const keep=new Set();
+    visible.forEach((c,i)=>{
+      keep.add(c.id);
+      let el=existing.get(c.id);
+      if(!el){
+        el=document.createElement("button");el.type="button";el.className="map-citizen";el.dataset.citizen=c.id;
+        el.setAttribute("aria-label",c.name+" 시민 정보");
+        el.innerHTML='<span class="citizen-shadow"></span><span class="citizen-body"></span>';
+        el.addEventListener("click",e=>{e.stopPropagation();showCitizen(c.id);});
+        layer.appendChild(el);
+      }
+      const seed=Array.from(c.id||String(i)).reduce((n,ch)=>n+ch.charCodeAt(0),i*17);
+      el.style.setProperty("--person-x",(12+(seed*37%760)/10)+"%");
+      el.style.setProperty("--person-y",(30+(seed*53%390)/10)+"%");
+      el.style.setProperty("--walk-delay",(-((seed%90)/10))+"s");
+      el.style.setProperty("--walk-duration",(7+(seed%9))+"s");
+      el.querySelector(".citizen-body").textContent=(c.icon&&/👩|👨|🧑|🧒|👧|👦/.test(c.icon))?c.icon:"🧑";
+      el.title=c.name+" · "+c.job;
+    });
+    existing.forEach((el,id)=>{if(!keep.has(id))el.remove();});
+    layer.dataset.population=String(w.population);
+  }
   function render(){renderHome();if(activeId)renderWorld();}
   function requestLandscape(){
     try{
@@ -333,6 +359,40 @@
     const memories=(c.memory||[]).map(m=>"<li>"+esc(m)+"</li>").join("")||"<li>아직 기록된 기억이 없습니다.</li>";
     showModal(c.name,"<div style='display:flex;gap:13px;align-items:center;margin-bottom:16px'><div class='avatar' style='width:54px;height:54px;font-size:24px'>"+esc(c.icon)+"</div><div><strong style='font-size:15px'>"+esc(c.name)+"</strong><p style='color:#a6b6cf;font-size:11px;margin:6px 0'>"+esc(c.job)+" · "+esc(c.age)+"세</p><span class='pill'>"+esc(c.trait)+"</span></div></div><div class='form-field'><label>개인 능력</label><div class='modal-note'>기술 숙련도 "+esc(c.skill)+"/5 · 사회적 관계 "+esc(c.relations)+"명</div></div><div class='form-field'><label>기억</label><ul style='margin:0;padding-left:19px;color:#b7c5d8;font-size:11px;line-height:1.8'>"+memories+"</ul></div><div class='modal-note'>시민의 상세한 감정·관계 시뮬레이션은 기초 단계입니다. 현재 기록은 실제 세계 사건과 시민 생성에 기반합니다.</div>",[{label:"닫기",className:"primary-btn",onClick:closeModal}],"CITIZEN PROFILE");
   }
+  function bindMapGestures(){
+    const map=$("worldMap"),scene=$("mapScene");if(!map||!scene)return;
+    const points=new Map();let startDistance=0,startZoom=1,startMid=null,startPan={x:0,y:0},dragStart=null;
+    let zoom=1,panX=0,panY=0;
+    const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+    const apply=()=>{scene.style.setProperty("--map-zoom",String(zoom));scene.style.setProperty("--pan-x",panX+"px");scene.style.setProperty("--pan-y",panY+"px");};
+    const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+    const midpoint=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+    const point=e=>({x:e.clientX,y:e.clientY});
+    map.style.touchAction="none";
+    map.addEventListener("pointerdown",e=>{
+      if(e.target.closest("button,.map-toolbar,.map-overlay-head,.map-caption,.tool-toggle"))return;
+      points.set(e.pointerId,point(e));try{map.setPointerCapture(e.pointerId);}catch(_){}
+      if(points.size===1){dragStart=point(e);startPan={x:panX,y:panY};}
+      if(points.size===2){const a=[...points.values()];startDistance=distance(a[0],a[1]);startZoom=zoom;startMid=midpoint(a[0],a[1]);startPan={x:panX,y:panY};}
+    });
+    map.addEventListener("pointermove",e=>{
+      if(!points.has(e.pointerId))return;
+      points.set(e.pointerId,point(e));
+      if(points.size>=2){
+        const a=[...points.values()],d=distance(a[0],a[1]),mid=midpoint(a[0],a[1]);
+        if(startDistance>0)zoom=clamp(startZoom*d/startDistance,0.8,5);
+        if(startMid){panX=startPan.x+(mid.x-startMid.x);panY=startPan.y+(mid.y-startMid.y);}
+        apply();e.preventDefault();
+      }else if(points.size===1&&dragStart){
+        panX=startPan.x+(e.clientX-dragStart.x);panY=startPan.y+(e.clientY-dragStart.y);apply();e.preventDefault();
+      }
+    },{passive:false});
+    const end=e=>{points.delete(e.pointerId);if(points.size<2){startDistance=0;startMid=null;}if(points.size===1){dragStart=[...points.values()][0];startPan={x:panX,y:panY};}else dragStart=null;};
+    map.addEventListener("pointerup",end);map.addEventListener("pointercancel",end);map.addEventListener("lostpointercapture",end);
+    map.addEventListener("wheel",e=>{if(e.target.closest(".map-toolbar,.map-overlay-head,.map-caption,.tool-toggle"))return;e.preventDefault();zoom=clamp(zoom*(e.deltaY<0?1.12:0.89),0.8,5);apply();},{passive:false});
+    document.querySelectorAll("[data-scale]").forEach(btn=>btn.addEventListener("click",()=>{const levels={world:1,continent:1.08,country:1.2,city:1.12,village:1.08};zoom=levels[btn.dataset.scale]||1;panX=0;panY=0;apply();}));
+    apply();
+  }
   function bind(){
     $("startBtn").addEventListener("click",()=>{enterLandscapeMode();$("welcomeView").classList.add("hidden");$("homeView").classList.remove("hidden");renderHome();window.scrollTo({top:0,behavior:"smooth"});});
     $("createWorldBtn").addEventListener("click",createWorldModal);$("emptyCreateBtn").addEventListener("click",createWorldModal);
@@ -358,6 +418,7 @@
     document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();$("worldMenu").classList.add("hidden");}});
     $("helpBtn").addEventListener("click",()=>showModal("나의 세계 사용 안내",'<div class="form-field"><label>세계 만들기</label><small>최대 10개의 세계를 만들 수 있습니다. 이름과 시민, 물리법칙, 사건 기록은 세계마다 따로 저장됩니다.</small></div><div class="form-field"><label>시뮬레이션</label><small>시간 배속을 1~100배로 조절하거나 일시 정지할 수 있습니다. 이 화면을 열어 둔 동안에만 시간이 진행됩니다.</small></div><div class="form-field"><label>기술 발전</label><small>시민과 연구 축적에 따라 기술이 발전합니다. 실제 역사 전체를 완벽히 재현하는 모델이 아니라 규칙 기반 프로토타입입니다.</small></div><div class="form-field"><label>저장과 AI</label><small>데이터는 이 브라우저의 로컬 저장소에 저장됩니다. 외부 AI API, 계정 동기화, 서버 백그라운드 시뮬레이션은 아직 연결되지 않았습니다.</small></div>',[{label:"알겠어요",className:"primary-btn",onClick:closeModal}],"QUICK GUIDE"));
     window.addEventListener("beforeunload",save);
+    bindMapGestures();
   }
   function setScale(scale){if(!levelNames[scale])return;activeScale=scale;document.querySelectorAll("[data-scale]").forEach(b=>b.classList.toggle("active",b.dataset.scale===scale));if(activeWorld())renderWorld();}
   function startSimulation(){
