@@ -7,11 +7,11 @@
   <meta name="description" content="하나의 거대한 3D 세계에서 지형과 기후, 시민과 문명의 성장을 관찰하는 시뮬레이션">
   <link rel="manifest" href="manifest.json">
   <title>나의 세계 · World Lab</title>
-  <link rel="stylesheet" href="style.css?v=13">
+  <link rel="stylesheet" href="style.css?v=14">
   <script src="https://js.puter.com/v2/"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-  <script src="world3d.js?v=9" defer></script>
-  <script src="script.js?v=19" defer></script>
+  <script src="world3d.js?v=10" defer></script>
+  <script src="script.js?v=20" defer></script>
 </head>
 <body>
   <div id="orientationNotice" class="orientation-notice" aria-live="polite">
@@ -92,6 +92,22 @@
           </aside>
         </div>
 
+        <div id="worldBottomUi" class="world-bottom-ui" aria-live="polite">
+          <div id="settlementTitleBar" class="settlement-title-bar hidden">
+            <span class="settlement-name-icon" aria-hidden="true">⌂</span>
+            <input id="settlementNameInput" type="text" maxlength="32" autocomplete="off" aria-label="마을 이름 수정" title="마을 이름을 직접 수정할 수 있습니다">
+            <span class="settlement-edit-hint">이름 수정</span>
+          </div>
+          <div class="world-bottom-card">
+            <div id="worldPopulationInfo" class="world-population-info"><span>세계 전체 인구</span><strong id="worldTotalPopulation">12명</strong></div>
+            <div id="settlementDetails" class="settlement-details hidden">
+              <div class="settlement-detail"><span>거주 인구</span><strong id="settlementPopulationValue">0명</strong></div>
+              <div class="settlement-detail"><span>유형</span><strong id="settlementTypeValue">정착지</strong></div>
+              <div class="settlement-detail"><span>주변 환경</span><strong id="settlementEnvironmentValue">미확인</strong></div>
+              <div class="settlement-detail"><span>현재 상태</span><strong id="settlementStatusValue">일상</strong></div>
+            </div>
+          </div>
+        </div>
       </section>
     </main>
     <footer><span class="brand-mark">✦</span> WORLD LAB <span>작은 변화가 역사를 만듭니다.</span></footer>
