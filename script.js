@@ -196,7 +196,10 @@
     const a=findNation(w,attackerId)||w.nations.find(n=>attackerName&&n.name.includes(attackerName))||pair[0];
     const b=findNation(w,defenderId)||w.nations.find(n=>defenderName&&n.name.includes(defenderName)&&n.id!==a.id)||pair.find(n=>n.id!==a.id)||pair[1];if(!a||!b||a.id===b.id)return false;
     if(!a.atWarWith.includes(b.id))a.atWarWith.push(b.id);if(!b.atWarWith.includes(a.id))b.atWarWith.push(a.id);w.wars=Array.isArray(w.wars)?w.wars:[];
-    if(!w.wars.some(x=>x.active&&((x.attackerId===a.id&&x.defenderId===b.id)||(x.attackerId===b.id&&x.defenderId===a.id))))w.wars.push({id:uid(),attackerId:a.id,defenderId:b.id,lastAttackDay:Math.floor(w.elapsedDays)-10,active:true});
+    if(!w.wars.some(x=>x.active&&((x.attackerId===a.id&&x.defenderId===b.id)||(x.attackerId===b.id&&x.defenderId===a.id)))){
+      const wr={id:uid(),attackerId:a.id,defenderId:b.id,lastAttackDay:Math.floor(w.elapsedDays)-30,active:true},from=w.settlementData.find(x=>x.nationId===a.id),to=w.settlementData.find(x=>x.nationId===b.id);
+      if(from&&to)wr.visualAction={type:w.techIndex>=6?"projectile":"soldiers",from:{x:from.x,z:from.z},to:{x:to.x,z:to.z},at:Date.now()};w.wars.push(wr);
+    }
     addEvent(w,"전쟁 선포",a.name+"이 "+b.name+"에 전쟁을 선포했습니다. 양측 병력이 이동하기 시작합니다.","⚔️","milestone");syncSettlementPopulations(w);return true;
   }
   function endWar(w){
