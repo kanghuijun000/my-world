@@ -319,3 +319,9 @@ body.world-active #worldView .map-scene .geography{pointer-events:none}
  .world-minimap-head{font-size:8px}.world-minimap-head b,.world-minimap-foot{font-size:8px}
  .world-view-label{font-size:9px;padding:6px 7px}
 }
+
+.world-minimap-foot{justify-content:space-between}
+.world-minimap-foot span{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.world-minimap-foot i{display:inline-block;width:6px;height:6px;border-radius:50%;margin-left:3px}
+.world-minimap-foot .mini-village{background:#e6e7b5}
+.world-minimap-foot .mini-city{background:#ffcf75}
