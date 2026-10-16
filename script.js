@@ -131,13 +131,10 @@
   function environmentLabel(w){return w.environment>=75?"안정적":w.environment>=45?"변화 중":"주의 필요";}
   function addPeople(w,count,jobType){
     const safeCount=Math.max(1,Math.min(100,Math.floor(Number(count)||1)));
-    for(let i=0;i<safeCount;i++)w.citizens.push(newCitizen(jobType));
-    w.population=w.citizens.length;
-    w.food=Math.max(0,w.food-safeCount*0.35);
-    w.resources=Math.max(0,w.resources-safeCount*0.12);
+    for(let i=0;i<safeCount&&w.citizens.length<1000;i++){const c=newCitizen(jobType);assignCitizen(w,c);}
+    w.population=w.citizens.length;syncSettlementPopulations(w);w.food=Math.max(0,w.food-safeCount*0.35);w.resources=Math.max(0,w.resources-safeCount*0.12);
     if(w.population>30)w.environment=Math.max(0,w.environment-safeCount*0.06);
-    const title="새로운 시민 "+safeCount+"명 합류";
-    addEvent(w,title,"새 주민들이 공동체에 합류했습니다. 인구 증가에 따라 식량과 거주 공간의 수요도 커졌습니다.","♟","people");
+    addEvent(w,"새로운 시민 "+safeCount+"명 합류","새 주민들이 공동체에 합류했습니다. 실제 거주 정착지에 배정되어 마을별 인구에 반영됩니다.","♟","people");
     unlockAchievements(w);save();renderWorld();
   }
   function settlementEnvironment(w,a){const x=a.x||0,z=a.z||0;if(x>25&&z>5)return "건조 지대";if(z<-25||Math.abs(x)>40)return "산지";if(Math.abs(x-4)<18&&z>-28&&z<24)return "강변 비옥지";if(z>-28&&z<24&&x>-32&&x<28)return "초원 농경지";return "숲과 사냥터";}
@@ -228,6 +225,8 @@
     title.classList.remove("hidden");populationInfo.classList.add("hidden");details.classList.remove("hidden");
     if(document.activeElement!==nameInput)nameInput.value=a.name||"이름 없는 마을";
     $("settlementPopulationValue").textContent=Number(a.population||0).toLocaleString("ko-KR")+"명";
+    const nation=w.nations.find(n=>n.id===a.nationId),nationSettlementIds=new Set(w.settlementData.filter(x=>x.nationId===a.nationId).map(x=>x.id)),nationPopulation=w.citizens.filter(c=>nationSettlementIds.has(c.homeSettlementId)).length;
+    const nationValue=$("settlementNationPopulationValue");if(nationValue)nationValue.textContent=(nation?.name||"국가 미정")+" · "+nationPopulation.toLocaleString("ko-KR")+"명";
     $("settlementTypeValue").textContent=a.type||settlementType(w,a);
     $("settlementEnvironmentValue").textContent=a.environment||settlementEnvironment(w,a);
     $("settlementStatusValue").textContent=settlementCurrentStatus(w,a);
