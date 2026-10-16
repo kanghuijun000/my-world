@@ -61,7 +61,7 @@
   function makeSettlementRecord(i=0,tech=-1){const a=i*2.39996,d=10+Math.sqrt(i)*12;return {id:uid(),name:settlementNames[i%settlementNames.length],population:i?0:12,type:tech>=5?"발전 도시":tech>=1?"농경 마을":"수렵·채집 야영지",x:Math.cos(a)*d-7,z:Math.sin(a)*d+6,radius:tech>=5?7:tech>=1?4.8:2.7,level:Math.max(0,tech),nationId:"nation-0",alive:true,relations:{}};}
   function ensureSettlements(w){if(!Array.isArray(w.settlementData))w.settlementData=[];w.settlementData=w.settlementData.filter(x=>x&&x.id&&x.alive!==false);if(!w.settlementData.length)for(let i=0;i<Math.max(1,w.settlements||1);i++)w.settlementData.push(makeSettlementRecord(i,w.techIndex));if(!Array.isArray(w.nations)||!w.nations.length)w.nations=[{id:"nation-0",name:nationNames[0],settlementIds:w.settlementData.map(x=>x.id),atWarWith:[],alive:true}];w.nations.forEach(n=>{n.settlementIds=Array.isArray(n.settlementIds)?n.settlementIds:[];n.atWarWith=Array.isArray(n.atWarWith)?n.atWarWith:[];});w.settlementData.forEach(x=>{if(!x.nationId||!w.nations.some(n=>n.id===x.nationId))x.nationId=w.nations[0].id;});w.settlements=w.settlementData.length;}
   function makeWorld(name){
-    const w={id:uid(),name:name.trim(),createdAt:Date.now(),elapsedDays:0,paused:false,speed:1,population:12,settlements:1,settlementData:[],nations:[],techIndex:-1,research:0,environment:100,food:100,resources:100,gravity:9.8,temperature:15,oxygen:21,events:[],reactions:[],citizens:[],achievements:[],filter:"all",manualResearch:0};
+    const w={id:uid(),name:name.trim(),createdAt:Date.now(),elapsedDays:0,paused:false,speed:1,population:12,settlements:1,settlementData:[],nations:[],techIndex:-1,research:0,environment:100,food:100,resources:100,gravity:9.8,temperature:15,oxygen:21,weather:"clear",weatherUntilDay:0,wars:[],epidemic:null,events:[],reactions:[],citizens:[],achievements:[],filter:"all",manualResearch:0};
     w.settlementData=[makeSettlementRecord(0,-1)];w.nations=[{id:"nation-0",name:nationNames[0],settlementIds:[w.settlementData[0].id],atWarWith:[],alive:true}];
     for(let i=0;i<w.population;i++)w.citizens.push(newCitizen());
     syncSettlementPopulations(w);
@@ -360,7 +360,7 @@
     $("populationStat").textContent=w.population.toLocaleString("ko-KR")+"명";$("techStat").textContent=techLabel(w);$("natureStat").textContent=environmentLabel(w);$("settlementStat").textContent=w.settlements+"곳";
     renderSettlementInfo(w);
     $("eventCount").textContent=w.events.length+"개 기록";
-    const importantEvents=w.events.filter(e=>e.category==="milestone"||e.category==="achievement"||/세계의 탄생|불의 활용|불의 시대|전기의 발견|철기 시대|새로운 도시|새로운 마을|정착|산업 혁명|디지털 시대|문자로 남긴/.test(e.title));
+    const importantEvents=w.events.filter(e=>["milestone","achievement","nature","people"].includes(e.category)||/세계의 탄생|불의 활용|불의 시대|전기의 발견|철기 시대|새로운 도시|새로운 마을|정착|산업 혁명|디지털 시대|문자로 남긴/.test(e.title));
     $("eventFeed").innerHTML=importantEvents.slice(0,8).map(e=>'<div class="event-item"><div class="event-icon">'+esc(e.icon)+'</div><div class="event-content"><strong>'+esc(e.title)+(e.category==="achievement"?' <span class="event-tag">ACHIEVEMENT</span>':'')+'</strong><p>'+esc(e.description)+'</p><time>'+(Math.floor(Math.max(0,(e.day||1)-1)/365)).toLocaleString("ko-KR")+"년 · "+e.day+"일 차</time></div></div>").join("")||'<div class="empty-inline">아직 기록이 없습니다.</div>';
     const filtered=w.reactions.filter(r=>activeFilter==="all"||r.sentiment===activeFilter);
     $("reactionFeed").innerHTML=filtered.slice(0,6).map(r=>'<div class="reaction-item '+esc(r.sentiment)+'"><div class="avatar">'+(r.sentiment==="negative"?"💭":"🗨️")+'</div><div class="reaction-copy"><strong>'+esc(r.name)+'</strong><span>'+esc(r.trait)+'</span><p>'+esc(r.text)+' <span>· '+esc(r.eventTitle)+'</span></p></div></div>').join("")||'<div class="empty-inline">이 필터에 해당하는 반응이 없습니다.</div>';
@@ -475,9 +475,9 @@
       addPeople(w,count,typeof data.job==="string"&&jobs.includes(data.job)?data.job:"random");showToast("AI 명령 적용: 시민 "+count+"명 추가");return true;
     }
     if(action==="create_settlement"){
-      if(w.settlements>=10){showToast("정착지는 최대 10곳까지 만들 수 있어요.");return true;}
+      if(w.settlementData.length>=10){showToast("정착지는 최대 10곳까지 만들 수 있어요.");return true;}
       if(w.population<8){showToast("마을을 만들려면 시민이 최소 8명 필요해요.");return true;}
-      w.settlements++;addEvent(w,"새로운 마을 형성","사용자 명령을 AI가 해석해 새로운 정착지를 만들었습니다.","🏡","village");unlockAchievements(w);save();renderWorld();showToast("AI 명령 적용: 새로운 마을 형성");return true;
+      createSettlementInWorld(w,false);addEvent(w,"새로운 마을 형성","AI 명령으로 실제 정착지가 만들어졌고 시민 일부가 새 마을에 거주하도록 배정되었습니다.","🏡","village");syncSettlementPopulations(w);unlockAchievements(w);save();renderWorld();showToast("AI 명령 적용: 새로운 마을 형성");return true;
     }
     if(action==="start_research"){
       w.manualResearch=1;addEvent(w,"연구 활동 시작","사용자 명령에 따라 연구 활동을 장려합니다. 연구 효과는 잠시 동안 적용됩니다.","🔭","discovery");save();renderWorld();showToast("AI 명령 적용: 연구 활동 시작");
@@ -532,7 +532,7 @@
       '11) force_war: {"action":"force_war"}. 필요하면 정착지를 분리해 두 국가를 만들고 전쟁을 시작한다.',
       '12) end_war: {"action":"end_war"}. 진행 중인 전쟁을 끝내고 휴전한다.',
       "지원 목록 밖의 요청은 action:null로 반환한다.",
-      "현재 세계 상태: 이름="+w.name+", 인구="+w.population+", 정착지="+w.settlements+", 연구="+Math.round(w.research)+", 기술="+techLabel(w)+", 배속="+w.speed+", 식량="+Math.round(w.food)+"/100, 자원="+Math.round(w.resources)+"/100, 환경="+Math.round(w.environment)+"/100, 중력="+w.gravity+"m/s², 기온="+w.temperature+"°C, 산소="+w.oxygen+"%.",
+      "현재 세계 상태: 이름="+w.name+", 인구="+w.population+", 정착지="+w.settlements+", 국가="+w.nations.map(n=>n.name).join(",")+", 진행 중 전쟁="+(w.wars||[]).filter(x=>x.active).length+", 날씨="+(w.weather||"clear")+", 전염병="+(w.epidemic?.active?w.epidemic.name:"없음")+", 연구="+Math.round(w.research)+", 기술="+techLabel(w)+", 배속="+w.speed+", 식량="+Math.round(w.food)+"/100, 자원="+Math.round(w.resources)+"/100, 환경="+Math.round(w.environment)+"/100, 중력="+w.gravity+"m/s², 기온="+w.temperature+"°C, 산소="+w.oxygen+"%.",
       "사용자 명령: "+userText
     ].join(String.fromCharCode(10));
     showToast("AI가 명령을 해석하고 있어요…");
