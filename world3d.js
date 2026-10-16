@@ -136,10 +136,10 @@
     const settlementCount=clamp(data.length||Math.max(1,w.settlements||1,Math.floor(pop/18)+1,tech>=3?2:1),1,8);
     for(let i=0;i<settlementCount;i++)settlements.push(createSettlement(i,settlementCount,tech,data[i]));
     const citizens=Array.isArray(w.citizens)?w.citizens:[];
-    const n=clamp(citizens.length||12,12,60);
+    const n=clamp(citizens.length,0,60);
     for(let i=0;i<n;i++){
       const c=citizens[i]||{id:"citizen-"+i,name:"시민 "+(i+1),trait:"주민",job:"주민"};
-      const home=settlements[i%settlements.length],a=rand(i+500)*Math.PI*2,d=rand(i+600)*home.radius*.85;
+      const home=settlements.find(s=>s.id===c.homeSettlementId)||settlements[i%settlements.length],a=rand(i+500)*Math.PI*2,d=rand(i+600)*home.radius*.85;
       people.push(createPerson(c,i,home.x+Math.cos(a)*d,home.z+Math.sin(a)*d));
     }
     // Natural landmarks remain spread over one continuous map; no zoom-level swapping.
@@ -171,7 +171,7 @@
   function setZoom(v){zoom=clamp(v,.55,4.8);updateCamera();drawMinimap();return zoom;}
   function pan(dx,dy){const scale=34/zoom/Math.max(250,host?.clientHeight||500);lookX=clamp(lookX-dx*scale,-WORLD*.48,WORLD*.48);lookZ=clamp(lookZ-dy*scale,-WORLD*.48,WORLD*.48);updateCamera();drawMinimap();}
   function setScale(){/* Intentionally no separate world/country/city modes: one continuous world. */}
-  function setWorld(w){worldData=w;if(root){const n=(w&&Array.isArray(w.citizens))?w.citizens.length:12,ds=Array.isArray(w?.settlementData)?w.settlementData.filter(a=>a.alive!==false):[],dc=ds.length,signature=JSON.stringify(ds.map(a=>[a.id,a.radius,a.level,a.population,a.nationId])),expected=clamp(n||12,12,60);if(people.length!==expected||lastBuiltTech!==(Number.isFinite(w.techIndex)?w.techIndex:-1)||settlements.length!==clamp(dc||Math.max(1,w.settlements||1,Math.floor(n/18)+1,(w.techIndex||0)>=3?2:1),1,8)||signature!==lastSettlementSignature||visualSignature(w)!==lastVisualSignature){buildWorld();return;}people.forEach((p,i)=>{if(w.citizens[i])p.citizen=w.citizens[i];});drawMinimap();}}
+  function setWorld(w){worldData=w;if(root){const n=(w&&Array.isArray(w.citizens))?w.citizens.length:12,ds=Array.isArray(w?.settlementData)?w.settlementData.filter(a=>a.alive!==false):[],dc=ds.length,signature=JSON.stringify(ds.map(a=>[a.id,a.radius,a.level,a.population,a.nationId])),expected=clamp(n,0,60);if(people.length!==expected||lastBuiltTech!==(Number.isFinite(w.techIndex)?w.techIndex:-1)||settlements.length!==clamp(dc||Math.max(1,w.settlements||1,Math.floor(n/18)+1,(w.techIndex||0)>=3?2:1),1,8)||signature!==lastSettlementSignature||visualSignature(w)!==lastVisualSignature){buildWorld();return;}people.forEach((p,i)=>{if(w.citizens[i])p.citizen=w.citizens[i];});drawMinimap();}}
   function resize(){if(!renderer||!host||!camera)return;const r=host.getBoundingClientRect();if(r.width<1||r.height<1)return;renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.4));renderer.setSize(Math.round(r.width),Math.round(r.height),false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();updateCamera();}
   function onClick(e){if(!renderer||e.target!==renderer.domElement)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-(e.clientY-rect.top)/rect.height*2+1;raycaster.setFromCamera(mouse,camera);const hits=raycaster.intersectObjects([...people.map(p=>p.group),...settlements.map(p=>p.group)],true);if(!hits.length){window.dispatchEvent(new CustomEvent("world3dsettlementclear"));return;}let o=hits[0].object;while(o.parent&&!people.some(p=>p.group===o)&&!settlements.some(p=>p.group===o))o=o.parent;const p=people.find(p=>p.group===o);if(p?.citizen?.id){window.dispatchEvent(new CustomEvent("world3dcitizenclick",{detail:{id:p.citizen.id}}));return;}const a=settlements.find(p=>p.group===o);if(a?.id)window.dispatchEvent(new CustomEvent("world3dsettlementclick",{detail:{id:a.id}}));}
   function focusCitizen(id){const p=people.find(x=>x.citizen&&x.citizen.id===id);if(!p)return;lookX=p.group.position.x;lookZ=p.group.position.z;zoom=Math.max(zoom,3.1);updateCamera();drawMinimap();}
