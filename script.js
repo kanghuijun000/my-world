@@ -191,8 +191,10 @@
     if(!b){const settlement=w.settlementData[w.settlementData.length-1],id="nation-"+uid();b={id,name:nationNames[w.nations.length%nationNames.length],settlementIds:[],atWarWith:[],alive:true};w.nations.push(b);settlement.nationId=id;syncSettlementPopulations(w);}
     return a&&b?[a,b]:null;
   }
-  function forceWar(w,attackerId,defenderId){
-    const pair=ensureTwoNations(w);if(!pair)return false;const a=findNation(w,attackerId)||pair[0],b=findNation(w,defenderId)||pair.find(n=>n.id!==a.id)||pair[1];if(!a||!b||a.id===b.id)return false;
+  function forceWar(w,attackerId,defenderId,attackerName,defenderName){
+    const pair=ensureTwoNations(w);if(!pair)return false;
+    const a=findNation(w,attackerId)||w.nations.find(n=>attackerName&&n.name.includes(attackerName))||pair[0];
+    const b=findNation(w,defenderId)||w.nations.find(n=>defenderName&&n.name.includes(defenderName)&&n.id!==a.id)||pair.find(n=>n.id!==a.id)||pair[1];if(!a||!b||a.id===b.id)return false;
     if(!a.atWarWith.includes(b.id))a.atWarWith.push(b.id);if(!b.atWarWith.includes(a.id))b.atWarWith.push(a.id);w.wars=Array.isArray(w.wars)?w.wars:[];
     if(!w.wars.some(x=>x.active&&((x.attackerId===a.id&&x.defenderId===b.id)||(x.attackerId===b.id&&x.defenderId===a.id))))w.wars.push({id:uid(),attackerId:a.id,defenderId:b.id,lastAttackDay:Math.floor(w.elapsedDays)-10,active:true});
     addEvent(w,"전쟁 선포",a.name+"이 "+b.name+"에 전쟁을 선포했습니다. 양측 병력이 이동하기 시작합니다.","⚔️","milestone");syncSettlementPopulations(w);return true;
@@ -467,7 +469,7 @@
     if(action==="set_weather"){if(!setWeather(w,String(data.weather||"").toLowerCase())){showToast("날씨는 clear/rain/storm/snow/drought 중에서 선택해 주세요.");return true;}save();renderWorld();showToast("AI 명령 적용: 날씨를 변경했어요.");return true;}
     if(action==="outbreak"||action==="start_epidemic"){startEpidemic(w,data.severity||2);save();renderWorld();showToast("AI 명령 적용: 전염병이 발생했어요.");return true;}
     if(action==="end_epidemic"){if(w.epidemic)w.epidemic.active=false;w.citizens.forEach(c=>{c.infected=false;c.infectedDays=0;});addEvent(w,"전염병 치료","치료 조치로 전염병 확산을 강제로 중단했습니다.","🩺","milestone");save();renderWorld();showToast("AI 명령 적용: 전염병을 종식했어요.");return true;}
-    if(action==="force_war"||action==="start_war"){const ok=forceWar(w,data.attackerId,data.defenderId);if(ok){save();renderWorld();showToast("AI 명령 적용: 국가 간 전쟁을 시작했어요.");}return true;}
+    if(action==="force_war"||action==="start_war"){const ok=forceWar(w,data.attackerId,data.defenderId,data.attackerName,data.defenderName);if(ok){save();renderWorld();showToast("AI 명령 적용: 국가 간 전쟁을 시작했어요.");}return true;}
     if(action==="end_war"||action==="peace"){endWar(w);save();renderWorld();showToast("AI 명령 적용: 휴전 협정을 맺었어요.");return true;}
     if(action==="add_citizens"){
       const count=Math.floor(Number(data.count));
@@ -529,10 +531,10 @@
       '8) set_weather: {"action":"set_weather","weather":"clear"|"rain"|"storm"|"snow"|"drought"}. 비·폭풍·눈·가뭄·맑은 날씨를 적용한다.',
       '9) outbreak: {"action":"outbreak","severity":1|2|3}. 가상의 전염병 이벤트를 시작한다.',
       '10) end_epidemic: {"action":"end_epidemic"}. 전염병을 종료한다.',
-      '11) force_war: {"action":"force_war"}. 필요하면 정착지를 분리해 두 국가를 만들고 전쟁을 시작한다.',
+      '11) force_war: {"action":"force_war","attackerName"?:string,"defenderName"?:string}. 사용자가 국가 이름을 지정하면 해당 국가 둘을 선택하고, 두 국가가 없으면 정착지를 분리해 만든 뒤 전쟁을 시작한다.',
       '12) end_war: {"action":"end_war"}. 진행 중인 전쟁을 끝내고 휴전한다.',
       "지원 목록 밖의 요청은 action:null로 반환한다.",
-      "현재 세계 상태: 이름="+w.name+", 인구="+w.population+", 정착지="+w.settlements+", 국가="+w.nations.map(n=>n.name).join(",")+", 진행 중 전쟁="+(w.wars||[]).filter(x=>x.active).length+", 날씨="+(w.weather||"clear")+", 전염병="+(w.epidemic?.active?w.epidemic.name:"없음")+", 연구="+Math.round(w.research)+", 기술="+techLabel(w)+", 배속="+w.speed+", 식량="+Math.round(w.food)+"/100, 자원="+Math.round(w.resources)+"/100, 환경="+Math.round(w.environment)+"/100, 중력="+w.gravity+"m/s², 기온="+w.temperature+"°C, 산소="+w.oxygen+"%.",
+      "현재 세계 상태: 이름="+w.name+", 인구="+w.population+", 정착지="+w.settlements+", 국가="+w.nations.map(n=>n.id+":"+n.name).join(",")+", 진행 중 전쟁="+(w.wars||[]).filter(x=>x.active).length+", 날씨="+(w.weather||"clear")+", 전염병="+(w.epidemic?.active?w.epidemic.name:"없음")+", 연구="+Math.round(w.research)+", 기술="+techLabel(w)+", 배속="+w.speed+", 식량="+Math.round(w.food)+"/100, 자원="+Math.round(w.resources)+"/100, 환경="+Math.round(w.environment)+"/100, 중력="+w.gravity+"m/s², 기온="+w.temperature+"°C, 산소="+w.oxygen+"%.",
       "사용자 명령: "+userText
     ].join(String.fromCharCode(10));
     showToast("AI가 명령을 해석하고 있어요…");
