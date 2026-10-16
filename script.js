@@ -364,8 +364,8 @@
     const map=$("worldMap");if(!map)return;
     const has3d=!!(window.World3D&&window.World3D.init($("world3dHost")));
     if(has3d)map.classList.add("has-world3d");
-    const points=new Map();let startDistance=0,startZoom=1,startMid=null,lastMid=null,dragStart=null,dragged=false;
-    let zoom=1;
+    const points=new Map();let startDistance=0,startZoom=1.7,startMid=null,lastMid=null,dragStart=null,dragged=false;
+    let zoom=1.7;
     const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
     const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
     const midpoint=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
@@ -401,8 +401,8 @@
     map.addEventListener("wheel",e=>{if(e.target.closest(".map-toolbar,.map-overlay-head,.map-caption,.tool-toggle"))return;e.preventDefault();applyZoom(zoom*(e.deltaY<0?1.12:.89));},{passive:false});
     $("zoomInBtn").addEventListener("click",()=>applyZoom(zoom*1.22));
     $("zoomOutBtn").addEventListener("click",()=>applyZoom(zoom/1.22));
-    window.addEventListener("world3dcitizenclick",e=>{if(e.detail&&e.detail.id)showCitizen(e.detail.id);});
-    applyZoom(1);
+    window.addEventListener("world3dcitizenclick",e=>{if(e.detail&&e.detail.id){if(has3d)window.World3D.focusCitizen(e.detail.id);showCitizen(e.detail.id);}});
+    applyZoom(1.7);
   }
   function bind(){
     $("startBtn").addEventListener("click",()=>{enterLandscapeMode();$("welcomeView").classList.add("hidden");$("homeView").classList.remove("hidden");renderHome();window.scrollTo({top:0,behavior:"smooth"});});
