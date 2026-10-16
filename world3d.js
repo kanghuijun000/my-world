@@ -159,12 +159,13 @@
     updateCamera();
   }
   function updateCamera(){if(!camera||!baseCameraPosition)return;const s=1/zoom;camera.position.set(baseCameraPosition.x*s,baseCameraPosition.y*s,baseCameraPosition.z*s);camera.lookAt(0,baseLookY,0);}
-  function setScale(name){if(!(name in SCALE))return;scaleName=name;zoom=1;if(root){clearRoot();terrainScene();}document.querySelectorAll("[data-scale]").forEach(b=>b.classList.toggle("active",b.dataset.scale===name));}
+  function setScale(name){if(!(name in SCALE))return;scaleName=name;zoom=1;if(root){root.position.set(0,0,0);root.rotation.set(0,0,0);clearRoot();terrainScene();}document.querySelectorAll("[data-scale]").forEach(b=>b.classList.toggle("active",b.dataset.scale===name));}
   function setZoom(value){zoom=clamp(value,.8,5);updateCamera();return zoom;}
+  function pan(dx,dy){if(!root||!camera)return;if(scaleName==="world"){root.rotation.y+=dx*.004;root.rotation.x=clamp(root.rotation.x+dy*.003,-.8,.8);}else{root.position.x=clamp(root.position.x+dx*.025,-12,12);root.position.z=clamp(root.position.z+dy*.025,-12,12);}}
   function getZoom(){return zoom;}
   function setWorld(w){worldData=w;if(root){const list=(w&&Array.isArray(w.citizens))?w.citizens:[];people.forEach((p,i)=>{if(list[i])p.citizen=list[i];});}}
   function resize(){if(!renderer||!host)return;const r=host.getBoundingClientRect();if(r.width<1||r.height<1)return;renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();}
   function onClick(e){if(!renderer||!people.length)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=((e.clientX-rect.left)/rect.width)*2-1;mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(mouse,camera);const hits=raycaster.intersectObjects(people.map(p=>p.group),true);if(hits.length){let o=hits[0].object;while(o.parent&& !people.some(p=>p.group===o))o=o.parent;const found=people.find(p=>p.group===o);if(found&&found.citizen&&found.citizen.id){const ev=new CustomEvent("world3dcitizenclick",{detail:{id:found.citizen.id}});window.dispatchEvent(ev);}}}
   function animate(t){raf=requestAnimationFrame(animate);if(!renderer||!scene)return;const dt=Math.min(.05,(t-clock.last)/1000||0);clock.last=t;frame+=dt;people.forEach(p=>{const a=frame*p.speed+p.phase;p.legL.rotation.x=Math.sin(a)*.5;p.legR.rotation.x=-Math.sin(a)*.5;p.armL.rotation.x=-Math.sin(a)*.35;p.armR.rotation.x=Math.sin(a)*.35;p.group.position.x=p.origin.x+Math.sin(a*.25)*p.radius;p.group.position.z=p.origin.z+Math.cos(a*.2)*p.radius*.6;});renderer.render(scene,camera);}
-  window.World3D={init,setScale,setZoom,getZoom,setWorld,resize};
+  window.World3D={init,setScale,setZoom,getZoom,setWorld,pan,resize};
 })();
