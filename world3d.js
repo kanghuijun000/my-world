@@ -110,6 +110,7 @@
   }
   function createPerson(c,i,x,z){
     const g=group(root,x,heightAt(x,z),z),tech=Number.isFinite(worldData?.techIndex)?worldData.techIndex:-1;
+    if(Number(c.age)<13)g.scale.setScalar(.72);else if(Number(c.age)<18)g.scale.setScalar(.88);
     const skin=mat(["#b97953","#e0b18a","#8d6049","#d49a70"][i%4]);
     const primitive=tech<=0,earlyFarm=tech===1,iron=tech===2,modern=tech>=5;
     const cloth=mat(primitive?["#806044","#a17b54","#6e513e"][i%3]:earlyFarm?["#a88a61","#7f9b68","#a98f79"][i%3]:iron?["#8a765e","#6d7774","#9c8b70"][i%3]:["#557fa4","#bd6b55","#68976d","#c3a456","#8c79b2","#4f9692"][i%6]);
