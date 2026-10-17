@@ -1,4 +1,4 @@
-const CACHE_NAME = "my-world-cache-v32";
+const CACHE_NAME = "my-world-cache-v33";
 const FILES = ["./", "./index.html", "./style.css?v=16", "./script.js?v=24", "./world3d.js?v=13", "./manifest.json", "./icon.svg", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (event) => {
