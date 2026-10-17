@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<meta name="description" content="요소를 조합해 새로운 물질과 자연 현상을 발견하는 작은 실험실">
+<title>작은 실험실 · Element Lab</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#121d30;--panel2:#17253b;--line:#283953;--text:#edf5ff;--muted:#91a4bf;--cyan:#6ee7f9;--blue:#5e9cff;--green:#83e3b0;--gold:#f4ce7a;--danger:#ff9e9e}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 20% 0%,#1a3150 0,transparent 42%),var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}button,input{font:inherit}button{cursor:pointer;color:inherit}.app{max-width:1250px;margin:auto;padding:16px;min-height:100vh;display:flex;flex-direction:column;gap:14px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;align-items:center;gap:11px}.logo{width:44px;height:44px;border-radius:14px;background:linear-gradient(145deg,#64e7f0,#638bff);display:grid;place-items:center;color:#0b1830;font-size:25px;box-shadow:0 8px 28px #57bfe633}.brand h1{font-size:21px;margin:0;letter-spacing:-.5px}.brand p{margin:2px 0 0;color:var(--muted);font-size:11px;letter-spacing:2px}.stats{display:flex;gap:8px}.stat{border:1px solid var(--line);background:#101b2b;border-radius:12px;padding:8px 12px;min-width:75px;text-align:center}.stat strong{display:block;font-size:17px}.stat span{font-size:10px;color:var(--muted)}.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.pill,.toolbtn{border:1px solid var(--line);background:var(--panel);padding:9px 12px;border-radius:10px;font-size:12px}.toolbtn:hover,.pill:hover{border-color:#52749b}.layout{display:grid;grid-template-columns:minmax(235px,290px) minmax(0,1fr);gap:14px;flex:1;min-height:540px}.panel{background:linear-gradient(160deg,#142137,#101a2a);border:1px solid var(--line);border-radius:18px;overflow:hidden;min-width:0}.panelhead{padding:15px 15px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}.panelhead h2{font-size:14px;margin:0}.sub{color:var(--muted);font-size:11px;margin-top:4px}.search{width:100%;border:1px solid var(--line);background:#0b1524;color:var(--text);padding:10px 11px;border-radius:10px;outline:none}.search:focus{border-color:var(--cyan)}.filters{display:flex;gap:5px;overflow-x:auto;padding:10px 12px 4px}.filter{border:1px solid transparent;background:transparent;color:var(--muted);padding:6px 9px;border-radius:8px;white-space:nowrap;font-size:11px}.filter.active{background:#1d3850;color:var(--cyan);border-color:#315c76}.elements{padding:9px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:calc(100vh - 275px);min-height:280px;overflow:auto;align-content:start}.element{position:relative;min-width:0;display:flex;align-items:center;gap:8px;text-align:left;border:1px solid #2a3d56;background:linear-gradient(145deg,#192a40,#132034);border-radius:12px;padding:9px 7px;user-select:none;touch-action:none;transition:transform .12s,border-color .12s,background .12s}.element:hover{border-color:#5a91ad;transform:translateY(-1px)}.element.selected{border-color:var(--cyan);background:#1b3a4b;box-shadow:0 0 0 1px #6ee7f933}.emoji{font-size:23px;line-height:1;flex-shrink:0}.ename{font-size:11px;font-weight:700;overflow-wrap:anywhere}.ecat{display:block;font-size:9px;color:var(--muted);margin-top:3px;font-weight:400}.locked{opacity:.35;filter:grayscale(1)}.locked .ename:after{content:" 🔒";font-size:9px}.workpanel{display:flex;flex-direction:column}.workhead{padding:15px 17px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line)}.workhead h2{font-size:14px;margin:0}.workarea{margin:14px;flex:1;min-height:300px;border:1px dashed #38516d;border-radius:16px;background:radial-gradient(ellipse at 50% 30%,#19334b77,transparent 65%),#0c1726;position:relative;display:flex;align-items:center;justify-content:center;padding:18px;overflow:hidden;transition:border-color .15s,background .15s}.workarea.over{border-color:var(--cyan);background-color:#102b3b}.empty{text-align:center;color:var(--muted);max-width:300px;pointer-events:none}.empty .big{font-size:44px;margin-bottom:12px}.empty strong{display:block;color:#dcecff;font-size:14px}.empty p{font-size:12px;line-height:1.6}.slots{display:grid;grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr);align-items:center;gap:10px;width:100%;max-width:600px}.slot{min-height:155px;border:1px dashed #405977;background:#111f32;border-radius:16px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:9px;padding:12px;text-align:center;transition:all .15s;touch-action:none}.slot.filled{border-style:solid;border-color:#3d7890;background:linear-gradient(150deg,#1b354b,#14253a)}.slot.target{border-color:var(--cyan);box-shadow:0 0 0 3px #6ee7f922}.slot .emoji{font-size:37px}.slot strong{font-size:13px}.slot small{font-size:10px;color:var(--muted)}.plus{font-size:22px;text-align:center;color:#7187a4}.result{border-top:1px solid var(--line);padding:13px 16px;min-height:92px;display:flex;align-items:center;gap:13px}.resulticon{width:48px;height:48px;border-radius:14px;background:#1b3046;display:grid;place-items:center;font-size:27px;flex-shrink:0}.resulttext{flex:1;min-width:0}.resulttext strong{font-size:13px;display:block}.resulttext p{margin:4px 0 0;color:var(--muted);font-size:11px;line-height:1.45}.result .toolbtn{flex-shrink:0}.hint{padding:0 16px 14px;color:var(--muted);font-size:10px}.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#e7fbff;color:#102033;border-radius:12px;padding:11px 16px;font-size:12px;font-weight:700;box-shadow:0 10px 35px #0006;transition:.2s;z-index:20;max-width:calc(100vw - 30px);text-align:center}.toast.show{opacity:1;transform:translate(-50%,0)}.modalback{position:fixed;inset:0;background:#030812c9;display:none;align-items:center;justify-content:center;padding:18px;z-index:30}.modalback.show{display:flex}.modal{width:min(520px,100%);max-height:85vh;overflow:auto;background:#132137;border:1px solid #304662;border-radius:18px;padding:20px}.modal h2{margin:0 0 8px;font-size:18px}.modal p{color:var(--muted);font-size:12px;line-height:1.65}.modalgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.discoverrow{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:11px;background:#101c2e}.discoverrow .emoji{font-size:24px}.discoverrow strong{font-size:12px}.discoverrow small{display:block;color:var(--muted);font-size:10px;margin-top:3px}.modalactions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.primary{background:linear-gradient(130deg,#72e6f1,#80b8ff);border:0;color:#102038;font-weight:800;padding:10px 14px;border-radius:10px}.notice{color:var(--gold);font-size:10px;padding:0 16px 12px;line-height:1.5}.footer{display:flex;justify-content:space-between;gap:12px;color:#71849d;font-size:10px;padding:0 3px}.mobiletip{display:none}
+@media(max-width:720px){.app{padding:10px;gap:10px}.brand h1{font-size:18px}.logo{width:39px;height:39px}.stat{min-width:57px;padding:7px 8px}.stat strong{font-size:15px}.stat span{font-size:9px}.layout{grid-template-columns:minmax(120px,36%) minmax(0,1fr);gap:8px;min-height:calc(100dvh - 155px)}.panel{border-radius:14px}.panelhead{padding:11px 9px}.panelhead h2{font-size:12px}.sub{font-size:9px}.filters{padding:8px 6px 2px}.filter{font-size:10px;padding:6px}.elements{padding:6px;gap:5px;grid-template-columns:1fr;max-height:calc(100dvh - 260px);min-height:260px}.element{padding:8px 6px;gap:7px;border-radius:10px}.emoji{font-size:22px}.ename{font-size:11px}.workhead{padding:11px 9px}.workhead h2{font-size:12px}.workhead .toolbtn{padding:7px 8px;font-size:10px}.workarea{margin:8px;padding:7px;min-height:260px}.slots{grid-template-columns:minmax(0,1fr);gap:7px}.plus{font-size:16px;line-height:1}.slot{min-height:90px;padding:8px;gap:5px;border-radius:12px}.slot .emoji{font-size:29px}.slot strong{font-size:11px}.slot small{font-size:9px}.empty .big{font-size:34px}.empty strong{font-size:12px}.empty p{font-size:10px}.result{padding:10px;gap:8px;align-items:flex-start;flex-wrap:wrap}.resulticon{width:38px;height:38px;font-size:22px;border-radius:11px}.resulttext{width:calc(100% - 50px)}.resulttext strong{font-size:11px}.resulttext p{font-size:10px}.result .toolbtn{margin-left:46px}.hint{padding:0 10px 10px;font-size:9px}.toolbar{gap:5px}.pill,.toolbtn{padding:8px 9px;font-size:10px}.mobiletip{display:block;color:var(--muted);font-size:9px;margin:0 0 4px}.footer{font-size:9px}.modalgrid{grid-template-columns:1fr}}
+@media(max-width:390px){.stats{gap:4px}.stat{min-width:49px;padding:6px}.stat strong{font-size:13px}.brand p{font-size:9px}.layout{grid-template-columns:112px minmax(0,1fr)}.ename{font-size:10px}.element .emoji{font-size:20px}.slots{gap:5px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top">
+  <div class="brand"><div class="logo">⚗</div><div><h1>작은 실험실</h1><p>ELEMENT LAB</p></div></div>
+  <div class="stats"><div class="stat"><strong id="foundCount">8</strong><span>발견 요소</span></div><div class="stat"><strong id="goalCount">0</strong><span>도전과제</span></div></div>
+</header>
+<div class="toolbar">
+  <button class="toolbtn" id="bookBtn">📖 발견 도감</button>
+  <button class="toolbtn" id="challengeBtn">🏆 도전과제</button>
+  <button class="toolbtn" id="clearBtn">↺ 작업대 비우기</button>
+  <button class="toolbtn" id="resetBtn">초기화</button>
+</div>
+<div class="layout">
+  <aside class="panel">
+    <div class="panelhead"><div><h2>🧪 발견한 요소</h2><div class="sub">요소를 작업대로 끌어오세요</div></div></div>
+    <div style="padding:10px 10px 0"><input id="search" class="search" type="search" placeholder="요소 검색…"></div>
+    <div class="filters" id="filters">
+      <button class="filter active" data-cat="전체">전체</button><button class="filter" data-cat="자연">자연</button><button class="filter" data-cat="물질">물질</button><button class="filter" data-cat="생명">생명</button><button class="filter" data-cat="에너지">에너지</button>
+    </div>
+    <div id="elements" class="elements"></div>
+  </aside>
+  <main class="panel workpanel">
+    <div class="workhead"><div><h2>⚗️ 실험 작업대</h2><div class="sub">두 요소를 겹쳐 조합하세요</div></div><span class="pill" id="modeLabel">0 / 2 선택</span></div>
+    <p class="mobiletip" style="padding:0 10px">요소를 눌러도 선택할 수 있어요.</p>
+    <div class="workarea" id="workarea">
+      <div class="empty" id="empty"><div class="big">✧</div><strong>어떤 발견이 기다릴까요?</strong><p>왼쪽 요소를 끌어오거나 눌러 선택하세요.<br>두 요소를 작업대에 놓으면 조합됩니다.</p></div>
+      <div class="slots" id="slots" hidden>
+        <div class="slot" id="slot0" data-slot="0"><span class="emoji">＋</span><strong>첫 번째 요소</strong><small>요소를 놓으세요</small></div>
+        <div class="plus">＋</div>
+        <div class="slot" id="slot1" data-slot="1"><span class="emoji">＋</span><strong>두 번째 요소</strong><small>요소를 놓으세요</small></div>
+      </div>
+    </div>
+    <div class="result">
+      <div class="resulticon" id="resultIcon">🔎</div>
+      <div class="resulttext"><strong id="resultTitle">실험을 시작해 보세요</strong><p id="resultDesc">두 요소를 조합하면 결과와 과학적 설명이 여기에 표시됩니다.</p></div>
+      <button class="toolbtn" id="useResultBtn" hidden>결과 사용</button>
+    </div>
+    <div class="hint" id="hint">힌트: 물 + 물처럼 같은 요소끼리도 조합할 수 있어요.</div>
+    <div class="notice">게임은 과학적 원리를 참고하지만, 이해하기 쉽도록 일부 조합을 단순화했습니다. 실제 과학적 반응과 게임 규칙은 다를 수 있어요.</div>
+  </main>
+</div>
+<div class="footer"><span>실험하고, 발견하고, 지식을 넓히세요.</span><span>진행 상황은 이 기기에 자동 저장됩니다.</span></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="modalback" id="modalback"><section class="modal"><h2 id="modalTitle">발견 도감</h2><p id="modalIntro"></p><div id="modalBody"></div><div class="modalactions"><button class="primary" id="modalClose">닫기</button></div></section></div>
+<script>
+(()=>{
+const base=[
+{id:'water',name:'물',emoji:'💧',cat:'자연',desc:'다양한 물질을 녹이고, 얼거나 증발할 수 있는 액체.'},
+{id:'fire',name:'불',emoji:'🔥',cat:'에너지',desc:'열과 빛을 내는 연소 현상을 나타내는 요소.'},
+{id:'air',name:'공기',emoji:'🌬️',cat:'자연',desc:'여러 기체가 섞인 대기. 산소를 포함해 연소와 산화에 관여한다.'},
+{id:'earth',name:'흙',emoji:'🌱',cat:'자연',desc:'광물과 유기물이 섞인 땅의 재료.'},
+{id:'stone',name:'돌',emoji:'🪨',cat:'물질',desc:'광물로 이루어진 단단한 자연 재료.'},
+{id:'sun',name:'태양',emoji:'☀️',cat:'에너지',desc:'빛과 열을 공급하는 별.'},
+{id:'ice',name:'얼음',emoji:'🧊',cat:'자연',desc:'물이 얼어 만들어진 고체.'},
+{id:'iron',name:'철',emoji:'🔩',cat:'물질',desc:'강도와 활용성이 높은 금속 원소.'}
+];
+const items=[
+{id:'sea',name:'바다',emoji:'🌊',cat:'자연',desc:'넓은 바닷물. 게임에서는 물 두 개를 합쳐 발견한다.'},
+{id:'steam',name:'수증기',emoji:'♨️',cat:'자연',desc:'물이 기체 상태로 변한 것.'},
+{id:'cloud',name:'구름',emoji:'☁️',cat:'자연',desc:'공기 중 작은 물방울이나 얼음 결정이 모인 것.'},
+{id:'rain',name:'비',emoji:'🌧️',cat:'자연',desc:'구름 속 물방울이 커져 땅으로 떨어지는 강수.'},
+{id:'snow',name:'눈',emoji:'🌨️',cat:'자연',desc:'대기 중 얼음 결정이 모여 내리는 강수.'},
+{id:'salt',name:'소금',emoji:'🧂',cat:'물질',desc:'바닷물에 녹아 있던 염류가 물의 증발 뒤 결정으로 남을 수 있다.'},
+{id:'mud',name:'진흙',emoji:'🟤',cat:'물질',desc:'물과 흙이 섞인 부드러운 혼합물.'},
+{id:'sand',name:'모래',emoji:'🏖️',cat:'물질',desc:'암석이 잘게 부서져 만들어진 알갱이.'},
+{id:'clay',name:'점토',emoji:'🟫',cat:'물질',desc:'아주 작은 입자로 이루어진 흙 재료.'},
+{id:'rust',name:'녹슨 철',emoji:'🟠',cat:'물질',desc:'철이 물과 산소가 있는 환경에서 부식되어 만들어진 물질.'},
+{id:'oxide',name:'산화철',emoji:'🟥',cat:'물질',desc:'철과 산소가 결합한 화합물의 한 종류.'},
+{id:'wood',name:'나무',emoji:'🪵',cat:'생명',desc:'나무줄기에서 얻는 식물성 재료.'},
+{id:'seed',name:'씨앗',emoji:'🌰',cat:'생명',desc:'조건이 맞으면 싹을 틔울 수 있는 식물의 번식 단위.'},
+{id:'plant',name:'식물',emoji:'🌿',cat:'생명',desc:'빛과 물 등을 이용해 성장하는 생명체.'},
+{id:'flower',name:'꽃',emoji:'🌸',cat:'생명',desc:'많은 식물에서 번식을 돕는 기관.'},
+{id:'forest',name:'숲',emoji:'🌳',cat:'생명',desc:'나무와 여러 생물이 모여 살아가는 생태계.'},
+{id:'coal',name:'석탄',emoji:'⚫',cat:'물질',desc:'오랜 시간에 걸쳐 식물 잔해가 변해 만들어진 탄소가 풍부한 연료.'},
+{id:'carbon',name:'탄소',emoji:'⬛',cat:'물질',desc:'생명체와 다양한 물질을 이루는 중요한 원소.'},
+{id:'co2',name:'이산화탄소',emoji:'💨',cat:'물질',desc:'탄소와 산소로 이루어진 기체.'},
+{id:'glass',name:'유리',emoji:'🪟',cat:'물질',desc:'모래의 주성분인 실리카 등을 녹여 만드는 비결정질 고체.'},
+{id:'brick',name:'벽돌',emoji:'🧱',cat:'물질',desc:'점토 등을 빚고 구워 만드는 건축 재료.'},
+{id:'metal',name:'금속 조각',emoji:'🔧',cat:'물질',desc:'가공된 금속 재료를 나타내는 게임 요소.'},
+{id:'copper',name:'구리',emoji:'🟤',cat:'물질',desc:'전기와 열을 잘 전달하는 금속 원소.'},
+{id:'bronze',name:'청동',emoji:'🥉',cat:'물질',desc:'구리를 바탕으로 주석 등을 섞어 만든 합금.'},
+{id:'steel',name:'강철',emoji:'⚙️',cat:'물질',desc:'철을 바탕으로 탄소 함량 등을 조절해 만든 합금.'},
+{id:'volcano',name:'화산',emoji:'🌋',cat:'자연',desc:'마그마와 화산 가스가 지표로 나오는 지질 구조.'},
+{id:'lava',name:'용암',emoji:'🌋',cat:'자연',desc:'지표로 흘러나온 마그마.'},
+{id:'obsidian',name:'흑요석',emoji:'🖤',cat:'물질',desc:'용암이 빠르게 식으며 만들어질 수 있는 화산 유리.'},
+{id:'lightning',name:'번개',emoji:'⚡',cat:'에너지',desc:'대기 중 전하가 급격히 방전되는 현상.'},
+{id:'storm',name:'폭풍',emoji:'🌪️',cat:'자연',desc:'강한 바람과 기상 현상이 나타나는 상태.'},
+{id:'life',name:'생명',emoji:'🧬',cat:'생명',desc:'물질과 에너지를 이용하며 유지되는 생명 현상을 나타내는 개념 요소.'},
+{id:'bacteria',name:'미생물',emoji:'🦠',cat:'생명',desc:'눈에 보이지 않을 정도로 작은 생명체의 통칭.'},
+{id:'compost',name:'퇴비',emoji:'🍂',cat:'생명',desc:'유기물이 분해되어 토양에 영양분을 공급하는 재료.'},
+{id:'flowergarden',name:'꽃밭',emoji:'💐',cat:'생명',desc:'꽃이 많이 자라는 공간.'},
+{id:'rainbow',name:'무지개',emoji:'🌈',cat:'자연',desc:'물방울에서 빛이 굴절·반사·분산되어 보이는 광학 현상.'},
+{id:'energy',name:'에너지',emoji:'✨',cat:'에너지',desc:'변화와 일을 가능하게 하는 양을 나타내는 개념 요소.'},
+{id:'electricity',name:'전기',emoji:'🔋',cat:'에너지',desc:'전하의 존재와 움직임에 관련된 현상.'},
+{id:'magnet',name:'자석',emoji:'🧲',cat:'물질',desc:'자기장을 만들어 특정 물질에 힘을 작용하는 물체.'},
+{id:'crystal',name:'결정',emoji:'💎',cat:'물질',desc:'입자가 규칙적으로 배열된 고체 구조.'},
+{id:'fossil',name:'화석',emoji:'🦴',cat:'물질',desc:'과거 생물의 흔적이 지질 기록에 보존된 것.'},
+{id:'mountain',name:'산',emoji:'⛰️',cat:'자연',desc:'주변보다 높이 솟은 지형.'},
+{id:'island',name:'섬',emoji:'🏝️',cat:'자연',desc:'물로 둘러싸인 육지.'},
+{id:'planet',name:'행성',emoji:'🪐',cat:'자연',desc:'별 주위를 공전하는 천체.'}
+];
+const all=[...base,...items], byId=Object.fromEntries(all.map(x=>[x.id,x]));
+// 조합은 두 요소만 사용하며, 순서와 관계없이 같은 규칙으로 처리한다.
+const recipes={
+'water|water':{id:'sea',why:'게임 규칙: 물 두 개를 합쳐 거대한 물의 공간인 바다를 발견했어요!'},
+'fire|water':{id:'steam',why:'불의 열이 물을 데우면 일부가 수증기로 변할 수 있어요. 게임에서는 과정을 간단히 표현했어요.'},
+'air|steam':{id:'cloud',why:'수증기가 식어 작은 물방울이나 얼음 결정으로 응결하면 구름이 만들어질 수 있어요.'},
+'cloud|water':{id:'rain',why:'구름 속 물방울이 커지고 무거워지면 비가 내릴 수 있어요.'},
+'cloud|ice':{id:'snow',why:'차가운 구름에서 얼음 결정이 자라면 눈이 만들어질 수 있어요.'},
+'sea|sun':{id:'salt',why:'태양열로 바닷물이 증발하면 녹아 있던 염류가 남아 소금 결정이 만들어질 수 있어요.'},
+'earth|water':{id:'mud',why:'흙에 물이 섞이면 진흙이 돼요.'},
+'stone|water':{id:'sand',why:'암석은 오랜 풍화와 침식으로 잘게 부서져 모래가 될 수 있어요. 게임에서는 과정을 단순화했어요.'},
+'earth|stone':{id:'clay',why:'암석의 풍화로 만들어진 작은 광물 입자는 점토 형성에 관여해요.'},
+'air|iron':{id:'rust',why:'철은 공기 중 산소와 습기의 영향을 받아 녹슬 수 있어요.'},
+'fire|rust':{id:'oxide',why:'녹은 여러 산화철을 포함할 수 있어요. 이 조합은 녹을 산화철로 정리하는 게임 규칙이에요.'},
+'earth|seed':{id:'plant',why:'씨앗은 적절한 환경에서 발아해 식물로 자라요.'},
+'plant|sun':{id:'wood',why:'나무는 빛 에너지를 이용해 자라며 줄기에 목재가 형성돼요.'},
+'plant|flower':{id:'forest',why:'식물이 많이 모여 자라는 곳은 숲이 될 수 있어요. 게임에서는 식물의 집합으로 표현했어요.'},
+'plant|plant':{id:'flower',why:'게임 규칙: 식물 두 개를 조합해 꽃을 발견해요.'},
+'wood|fire':{id:'coal',why:'식물 유래 물질은 지질학적 시간과 압력 등으로 석탄 형성에 기여할 수 있어요. 불로 즉시 석탄이 되는 것은 아니며 게임용 조합이에요.'},
+'coal|fire':{id:'carbon',why:'석탄은 탄소가 풍부한 물질이에요. 게임에서는 탄소 요소로 분리해 발견하도록 했어요.'},
+'carbon|air':{id:'co2',why:'탄소가 산소와 반응하면 이산화탄소가 만들어질 수 있어요.'},
+'fire|sand':{id:'glass',why:'적절한 성분의 모래를 매우 높은 온도로 녹여 유리를 만들 수 있어요. 게임에서는 가열 조건을 단순화했어요.'},
+'clay|fire':{id:'brick',why:'점토를 모양 내고 구우면 벽돌을 만들 수 있어요.'},
+'stone|fire':{id:'metal',why:'일부 광석은 적절한 제련 과정을 거쳐 금속을 얻을 수 있어요. 게임에서는 금속 재료 발견으로 단순화했어요.'},
+'metal|water':{id:'copper',why:'이 조합은 실제 추출 반응을 뜻하지 않아요. 구리를 발견하는 게임용 탐색 조합이에요.'},
+'copper|metal':{id:'bronze',why:'구리에 주석 등 다른 금속을 섞으면 청동 같은 합금을 만들 수 있어요.'},
+'iron|carbon':{id:'steel',why:'철에 적절한 양의 탄소를 포함시키면 강철을 만들 수 있어요.'},
+'stone|fire':{id:'lava',why:'게임에서는 돌과 불을 조합해 녹은 암석인 용암을 발견할 수 있어요.'},
+'lava|water':{id:'obsidian',why:'용암이 빠르게 식으면 흑요석 같은 화산 유리가 만들어질 수 있어요.'},
+'cloud|energy':{id:'lightning',why:'구름 속 전하 분리와 방전은 번개를 일으킬 수 있어요. 에너지는 게임용 개념 요소예요.'},
+'lightning|air':{id:'storm',why:'번개와 강한 대기 현상을 연결한 게임용 조합이에요.'},
+'water|energy':{id:'life',why:'생명은 물질과 에너지를 이용해 유지돼요. 단순히 물과 에너지만으로 생명이 생기는 것은 아니며 게임용 발견 규칙이에요.'},
+'life|earth':{id:'bacteria',why:'미생물은 토양 등 다양한 환경에서 살아가요. 실제로 흙과 생명을 섞어 미생물을 즉시 만드는 것은 아니에요.'},
+'bacteria|plant':{id:'compost',why:'미생물은 식물 잔해 같은 유기물을 분해해 퇴비 형성에 기여해요.'},
+'flower|plant':{id:'flowergarden',why:'꽃과 식물을 모아 꽃밭을 발견해요.'},
+'rain|sun':{id:'rainbow',why:'비가 온 뒤 햇빛이 물방울을 통과하면 무지개가 보일 수 있어요.'},
+'fire|sun':{id:'energy',why:'불과 태양은 열과 빛 에너지를 보여주는 요소예요.'},
+'copper|lightning':{id:'electricity',why:'구리는 전기를 잘 전달하는 도체예요. 번개와 구리 조합은 전기 요소를 발견하는 게임용 규칙이에요.'},
+'iron|lightning':{id:'magnet',why:'철은 자화될 수 있는 강자성 물질이에요. 이 조합은 자석 발견을 단순화했어요.'},
+'salt|water':{id:'crystal',why:'소금물에서 물이 증발하면 조건에 따라 소금 결정이 자라요.'},
+'plant|stone':{id:'fossil',why:'생물의 흔적은 퇴적물에 묻혀 보존되면 화석이 될 수 있어요. 게임에서는 과정을 단순화했어요.'},
+'stone|mountain':{id:'mountain',why:'게임 규칙: 돌 두 요소 대신 산과 돌을 조합해 산을 해금하도록 한 특수 조합이에요.'},
+'sea|earth':{id:'island',why:'바다에 둘러싸인 육지를 섬이라고 해요. 게임에서는 바다와 땅의 조합으로 발견해요.'},
+'sun|stone':{id:'planet',why:'태양과 암석은 행성의 재료와 별을 연상시키는 게임용 조합이에요.'},
+'ice|sun':{id:'water',why:'얼음은 열을 받으면 녹아 물이 될 수 있어요.'},
+'sea|ice':{id:'snow',why:'바다와 얼음의 조합은 눈 요소를 발견하는 게임용 규칙이에요.'},
+'mud|fire':{id:'brick',why:'진흙이나 점토를 빚고 구우면 벽돌을 만들 수 있어요.'},
+'wood|water':{id:'plant',why:'나무는 식물에서 얻는 재료예요. 게임에서는 목재를 식물 요소로 되돌리는 조합으로 표현했어요.'},
+'glass|stone':{id:'crystal',why:'유리와 결정은 구조가 다르지만, 게임에서는 투명한 고체 재료를 탐구하는 연결 조합이에요.'},
+'coal|stone':{id:'mountain',why:'석탄과 암석은 지질 환경에서 발견돼요. 게임에서는 산 지형 발견 조합으로 단순화했어요.'}
+};
+const challenges=[
+{id:'first',title:'첫 발견',desc:'새로운 요소를 하나 발견하세요.',goal:1,reward:'첫 번째 발견을 기록했어요.'},
+{id:'five',title:'초보 연구원',desc:'발견한 요소 5개 모으기',goal:5,reward:'실험실이 조금씩 커지고 있어요.'},
+{id:'ten',title:'발견의 시작',desc:'발견한 요소 10개 모으기',goal:10,reward:'10개 요소 발견 달성!'},
+{id:'twenty',title:'호기심 많은 과학자',desc:'발견한 요소 20개 모으기',goal:20,reward:'20개 요소 발견 달성!'},
+{id:'thirty',title:'실험의 달인',desc:'발견한 요소 30개 모으기',goal:30,reward:'30개 요소 발견 달성!'},
+{id:'combo',title:'조합 성공',desc:'조합을 10번 성공시키세요.',goal:10,reward:'조합의 감을 잡았어요!'}
+];
+const KEY='small-lab-save-v1';
+let state={found:base.map(x=>x.id),combos:0,knownRecipes:[],activeCat:'전체',slots:[null,null],lastResult:null,seenChallenges:[]};
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&Array.isArray(s.found))state={...state,...s,slots:[null,null],lastResult:null}}catch(e){}
+const $=id=>document.getElementById(id);
+let toastTimer;
+function save(){try{localStorage.setItem(KEY,JSON.stringify({...state,slots:undefined,lastResult:undefined}))}catch(e){}}
+function say(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2100)}
+function recipeKey(a,b){return [a,b].sort().join('|')}
+function render(){
+ const query=$('search').value.trim().toLowerCase();
+ const list=state.found.map(id=>byId[id]).filter(x=>x&& (state.activeCat==='전체'||x.cat===state.activeCat)&&(!query||x.name.toLowerCase().includes(query)||x.desc.toLowerCase().includes(query)));
+ $('elements').innerHTML=list.map(x=>'<button class="element '+(state.slots.includes(x.id)?'selected':'')+'" draggable="true" data-id="'+x.id+'" aria-label="'+x.name+' 끌어오기"><span class="emoji">'+x.emoji+'</span><span class="ename">'+x.name+'<span class="ecat">'+x.cat+'</span></span></button>').join('')||'<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:22px 8px;font-size:12px">검색 결과가 없어요.</div>';
+ $('foundCount').textContent=state.found.length;
+ $('goalCount').textContent=challenges.filter(c=>challengeProgress(c)>=c.goal).length+'/'+challenges.length;
+ $('modeLabel').textContent=state.slots.filter(Boolean).length+' / 2 선택';
+ $('elements').querySelectorAll('.element').forEach(el=>{
+  el.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;});
+  el.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',el.dataset.id);e.dataTransfer.effectAllowed='copy';});
+  el.addEventListener('click',()=>place(el.dataset.id));
+ });
+ updateSlots();
+}
+function updateSlots(){
+ const filled=state.slots.some(Boolean);
+ $('empty').hidden=filled;$('slots').hidden=!filled;
+ state.slots.forEach((id,i)=>{
+  const el=$('slot'+i),item=id?byId[id]:null;
+  el.classList.toggle('filled',!!item);
+  el.innerHTML=item?'<span class="emoji">'+item.emoji+'</span><strong>'+item.name+'</strong><small>눌러서 비우기</small>':'<span class="emoji">＋</span><strong>'+(i===0?'첫 번째 요소':'두 번째 요소')+'</strong><small>요소를 놓으세요</small>';
+ });
+ $('useResultBtn').hidden=!(state.lastResult&&state.found.includes(state.lastResult));
+}
+function place(id,slotIndex){
+ if(!state.found.includes(id))return;
+ if(slotIndex!==undefined){
+  if(state.slots[slotIndex]===id){state.slots[slotIndex]=null;render();return}
+  state.slots[slotIndex]=id;
+ }else{
+  if(state.slots[0]===null)state.slots[0]=id;
+  else if(state.slots[1]===null)state.slots[1]=id;
+  else{state.slots=[state.slots[1],id]}
+ }
+ render();
+ if(state.slots[0]&&state.slots[1])combine();
+}
+function combine(){
+ const [a,b]=state.slots,key=recipeKey(a,b),recipe=recipes[key];
+ state.combos++;
+ if(recipe){
+  const item=byId[recipe.id];
+  if(!item){showResult('❔','결과 데이터 확인 필요','이 조합의 결과 요소가 아직 등록되지 않았어요.');return}
+  const isNew=!state.found.includes(item.id);
+  if(isNew)state.found.push(item.id);
+  state.knownRecipes=[...new Set([...state.knownRecipes,key])];
+  state.lastResult=item.id;
+  showResult(item.emoji,isNew?'새로운 요소 발견! '+item.name:'이미 발견한 요소: '+item.name,recipe.why);
+  if(isNew)say('🎉 새로운 요소 발견: '+item.name);
+  else say('이미 발견한 요소예요: '+item.name);
+  state.slots=[a,b];save();render();
+  checkChallenges();
+ }else{
+  state.lastResult=null;
+  showResult('🔎','아직 발견하지 못했어요','이 조합에서는 알려진 결과가 없어요. 다른 요소를 시도해 보세요.');
+  state.slots=[a,b];save();render();
+ }
+}
+function showResult(icon,title,desc){$('resultIcon').textContent=icon;$('resultTitle').textContent=title;$('resultDesc').textContent=desc;$('hint').textContent='조합은 두 요소만 사용해요. 이미 발견한 요소도 계속 재료로 쓸 수 있어요.'}
+function challengeProgress(c){if(c.id==='combo')return state.combos;return state.found.length}
+function checkChallenges(){challenges.forEach(c=>{if(challengeProgress(c)>=c.goal&&!state.seenChallenges.includes(c.id)){state.seenChallenges.push(c.id);say('🏆 도전과제 달성: '+c.title)}});save();render()}
+$('workarea').addEventListener('dragover',e=>{e.preventDefault();$('workarea').classList.add('over')});
+$('workarea').addEventListener('dragleave',e=>{if(!$('workarea').contains(e.relatedTarget))$('workarea').classList.remove('over')});
+$('workarea').addEventListener('drop',e=>{e.preventDefault();$('workarea').classList.remove('over');const id=e.dataTransfer.getData('text/plain');if(!id)return;const slot=e.target.closest('[data-slot]');place(id,slot?Number(slot.dataset.slot):undefined)});
+$('slots').addEventListener('dragover',e=>{const slot=e.target.closest('[data-slot]');if(slot){e.preventDefault();slot.classList.add('target')}});
+$('slots').addEventListener('dragleave',e=>{const slot=e.target.closest('[data-slot]');if(slot)slot.classList.remove('target')});
+$('slots').addEventListener('drop',e=>{const slot=e.target.closest('[data-slot]');if(slot)slot.classList.remove('target')});
+$('slots').addEventListener('click',e=>{const slot=e.target.closest('[data-slot]');if(slot&&state.slots[Number(slot.dataset.slot)]){state.slots[Number(slot.dataset.slot)]=null;render()}});
+$('search').addEventListener('input',render);
+$('filters').addEventListener('click',e=>{const b=e.target.closest('[data-cat]');if(!b)return;state.activeCat=b.dataset.cat;$('filters').querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x===b));render()});
+$('clearBtn').addEventListener('click',()=>{state.slots=[null,null];state.lastResult=null;render();$('resultIcon').textContent='🔎';$('resultTitle').textContent='실험대를 비웠어요';$('resultDesc').textContent='새로운 조합을 시작해 보세요.'});
+$('useResultBtn').addEventListener('click',()=>{if(state.lastResult)place(state.lastResult)});
+function openModal(title,intro,body){$('modalTitle').textContent=title;$('modalIntro').textContent=intro;$('modalBody').innerHTML=body;$('modalback').classList.add('show')}
+$('modalClose').addEventListener('click',()=>$('modalback').classList.remove('show'));
+$('modalback').addEventListener('click',e=>{if(e.target===$('modalback'))$('modalback').classList.remove('show')});
+$('bookBtn').addEventListener('click',()=>{
+ const body=state.found.map(id=>byId[id]).filter(Boolean).sort((a,b)=>a.cat.localeCompare(b.cat,'ko')||a.name.localeCompare(b.name,'ko')).map(x=>'<div class="discoverrow"><span class="emoji">'+x.emoji+'</span><div><strong>'+x.name+'</strong><small>'+x.cat+' · '+x.desc+'</small></div></div>').join('');
+ openModal('📖 발견 도감','발견한 요소 '+state.found.length+'개 · 전체 요소 '+all.length+'개', '<div class="modalgrid">'+body+'</div>');
+});
+$('challengeBtn').addEventListener('click',()=>{
+ const body=challenges.map(c=>{const n=challengeProgress(c),done=n>=c.goal;return '<div class="discoverrow"><span class="emoji">'+(done?'🏆':'🎯')+'</span><div style="flex:1"><strong>'+c.title+(done?' ✓':'')+'</strong><small>'+c.desc+'</small><div style="height:5px;background:#273951;border-radius:8px;margin-top:7px;overflow:hidden"><div style="height:100%;width:'+Math.min(100,n/c.goal*100)+'%;background:#71dfbf"></div></div><small>'+Math.min(n,c.goal)+' / '+c.goal+'</small></div></div>'}).join('');
+ openModal('🏆 도전과제','요소를 발견하고 조합해 연구원 등급을 높여 보세요.', '<div class="modalgrid">'+body+'</div>');
+});
+$('resetBtn').addEventListener('click',()=>{if(confirm('발견 기록과 도전과제를 모두 초기화할까요? 이 작업은 되돌릴 수 없어요.')){localStorage.removeItem(KEY);state={found:base.map(x=>x.id),combos:0,knownRecipes:[],activeCat:'전체',slots:[null,null],lastResult:null,seenChallenges:[]};render();$('resultIcon').textContent='🔎';$('resultTitle').textContent='실험을 시작해 보세요';$('resultDesc').textContent='두 요소를 조합하면 결과와 과학적 설명이 여기에 표시됩니다.';say('실험실을 초기화했어요.')}})
+render();checkChallenges();
+})();
+</script>
+</body>
+</html>
